@@ -128,6 +128,18 @@ class Address:
             self.__address & 0xFF,
         ]
 
+    def is_eurid(self) -> bool:
+        """Check if the address is a EURID (EnOcean Unique Radio Identifier)."""
+        return 0x00000000 <= self.__address <= 0xFF7FFFFF
+
+    def is_base_address(self) -> bool:
+        """Check if the address is a Base address."""
+        return 0xFF800000 <= self.__address <= 0xFFFFFF80
+
+    def is_broadcast(self) -> bool:
+        """Check if the address is the broadcast address."""
+        return self.__address == 0xFFFFFFFF
+
     def __str__(self) -> str:
         """Return the EnOcean address as string."""
         return self.to_string()

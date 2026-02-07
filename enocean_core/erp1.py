@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
 
-from .address import EURID, BroadcastAddress
+from .address import EURID, Address, BaseAddress, BroadcastAddress
 from .esp3 import ESP3Packet, ESP3PacketType
 
 
@@ -21,7 +21,7 @@ class ERP1ParseError(Exception):
 class ERP1Telegram:
     rorg: RORG
     payload: bytes
-    sender: EURID
+    sender: EURID | BaseAddress
     status: int
 
     sub_tel_num: int | None = None
@@ -50,30 +50,41 @@ class ERP1Telegram:
         data = pkt.data
         opt = pkt.optional
 
-        # --- Sanity checks ---
+        # ERP1 telegrams must have at least 6 bytes of data (RORG + payload + sender + status)
         if len(data) < 6:
             raise ERP1ParseError(f"ERP1 telegram too short: {len(data)} bytes")
 
-        # --- Parse DATA ---
+        # determine RORG
         try:
             rorg = RORG(data[0])
         except ValueError:
             raise ERP1ParseError(f"Unknown RORG: 0x{data[0]:02X}")
 
-        sender = EURID.from_bytelist(data[-5:-1])
+        # determine sender address
+        s = Address.from_bytelist(data[-5:-1])
+        if s.is_eurid():
+            sender = EURID.from_number(s.to_number())
+        elif s.is_base_address():
+            sender = BaseAddress.from_number(s.to_number())
+        else:
+            raise ERP1ParseError(f"Invalid sender address: {sender}")
+
         status = data[-1]
         payload = data[1:-5]
 
-        # --- Parse OPTIONAL ---
+        # parse optional
         sub_tel_num = opt[0] if len(opt) > 0 else None
-        dBm = opt[1] if len(opt) > 1 else None
-        sec_level = opt[2] if len(opt) > 2 else None
-        destination_bytes = opt[3:8] if len(opt) > 7 else None
-        destination = (
-            EURID.from_bytelist(destination_bytes)
-            if destination_bytes is not None
-            else None
-        )
+
+        destination_bytes = opt[1:5] if len(opt) > 4 else None
+        d = Address.from_bytelist(destination_bytes) if destination_bytes else None
+
+        if d is not None and d.is_broadcast():
+            destination = BroadcastAddress()
+        elif d is not None and d.is_eurid():
+            destination = EURID.from_number(d.to_number())
+
+        dBm = opt[4] if len(opt) > 5 else None
+        sec_level = opt[5] if len(opt) > 6 else None
 
         return cls(
             rorg=rorg,

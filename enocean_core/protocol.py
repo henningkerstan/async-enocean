@@ -11,7 +11,7 @@ from .erp1 import RORG, ERP1Telegram
 from .esp3 import SYNC_BYTE, ESP3Packet, ESP3PacketType, crc8
 from .version import VersionIdentifier, VersionInfo
 
-type PacketCallback = Callable[[ESP3Packet], None]
+type ESP3Callback = Callable[[ESP3Packet], None]
 type ERP1Callback = Callable[[ERP1Telegram], None]
 # type UTECallback = Callable[[UTE], None]
 
@@ -26,14 +26,12 @@ class ESP3(asyncio.Protocol):
     """
 
     def __init__(self):
-        self.transport = None
-        self._buffer = bytearray()
+        self.transport: serial_asyncio.SerialTransport | None = None
+        self.__buffer = bytearray()
 
-        # Raw ESP3 packet callbacks
-        self._packet_callbacks: list[PacketCallback] = []
-
-        # ERP1 callbacks
-        self._erp1_callbacks: list[ERP1Callback] = []
+        # callbacks
+        self.__esp3_callbacks: list[ESP3Callback] = []
+        self.__erp1_callbacks: list[ERP1Callback] = []
 
         # UTE callbacks
         # self._ute_callbacks: list[UTECallback] = []
@@ -43,6 +41,7 @@ class ESP3(asyncio.Protocol):
         self.__base_id: BaseAddress | None = None
         self.__eurid: EURID | None = None
 
+        self.__awaiting_response: bool = False
         self.__response: ResponseTelegram | None = None
 
     @classmethod
@@ -66,17 +65,14 @@ class ESP3(asyncio.Protocol):
     # Callback registration
     # ------------------------------------------------------------------
 
-    def add_packet_callback(self, cb: PacketCallback):
-        self._packet_callbacks.append(cb)
+    def add_packet_callback(self, cb: ESP3Callback):
+        self.__esp3_callbacks.append(cb)
 
     def add_erp1_callback(self, cb: ERP1Callback):
-        self._erp1_callbacks.append(cb)
+        self.__erp1_callbacks.append(cb)
 
-    # ------------------------------------------------------------------
-    # Emit helpers
-    # ------------------------------------------------------------------
-
-    def _emit(self, callbacks, obj):
+    def __emit(self, callbacks, obj):
+        """Emit an object to all registered callbacks of the given type."""
         loop = asyncio.get_running_loop()
         for cb in callbacks:
             loop.call_soon(cb, obj)
@@ -89,8 +85,8 @@ class ESP3(asyncio.Protocol):
         self.transport = transport
 
     def data_received(self, data: bytes):
-        self._buffer.extend(data)
-        self._process_buffer()
+        self.__buffer.extend(data)
+        self.__process_buffer()
 
     def connection_lost(self, exc):
         self.transport = None
@@ -98,86 +94,85 @@ class ESP3(asyncio.Protocol):
     def eof_received(self, exc):
         pass
 
-    # ------------------------------------------------------------------
-    # ESP3 framing + parsing
-    # ------------------------------------------------------------------
-
-    def _process_buffer(self):
+    def __process_buffer(self):
+        """Process the internal buffer to extract complete ESP3 packets and emit them."""
         while True:
             # find sync byte
             try:
-                sync_index = self._buffer.index(SYNC_BYTE)
+                sync_index = self.__buffer.index(SYNC_BYTE)
             except ValueError:
-                self._buffer.clear()
+                self.__buffer.clear()
                 return
 
             # drop garbage before sync
             if sync_index > 0:
-                del self._buffer[:sync_index]
+                del self.__buffer[:sync_index]
 
             # need at least sync + header + header CRC
-            if len(self._buffer) < 6:
+            if len(self.__buffer) < 6:
                 return
 
-            header = self._buffer[1:5]
+            # read header
+            header = self.__buffer[1:5]
             data_len = (header[0] << 8) | header[1]
             opt_len = header[2]
             packet_type = header[3]
 
             total_len = 1 + 4 + 1 + data_len + opt_len + 1
-            if len(self._buffer) < total_len:
+            if len(self.__buffer) < total_len:
                 return
 
             # validate header CRC
-            if self._buffer[5] != crc8(header):
-                del self._buffer[:1]
+            if self.__buffer[5] != crc8(header):
+                del self.__buffer[:1]
                 continue
 
-            # Extract data + optional
+            # extract data + optional
             data_start = 6
             data_end = data_start + data_len
             opt_end = data_end + opt_len
 
-            data = bytes(self._buffer[data_start:data_end])
-            optional = bytes(self._buffer[data_end:opt_end])
+            data = bytes(self.__buffer[data_start:data_end])
+            optional = bytes(self.__buffer[data_end:opt_end])
 
-            # Validate data CRC
-            if self._buffer[opt_end] != crc8(data + optional):
-                del self._buffer[:1]
+            # validate data CRC
+            if self.__buffer[opt_end] != crc8(data + optional):
+                del self.__buffer[:1]
                 continue
 
+            # create ESP3Packet and process it
             pkt = ESP3Packet(ESP3PacketType(packet_type), data, optional)
-            self.process_esp3_packet(pkt)
+            self.__process_esp3_packet(pkt)
 
             # Remove processed bytes
-            del self._buffer[:total_len]
+            del self.__buffer[:total_len]
 
-    def process_esp3_packet(self, pkt: ESP3Packet):
-        # response are handled internally only
-        if pkt.packet_type == ESP3PacketType.RESPONSE:
-            self.process_response_packet(pkt)
+    def __process_esp3_packet(self, packet: ESP3Packet):
+        """Process a received ESP3 packet. This includes emitting the raw packet to registered callbacks and further processing based on packet type."""
+        self.__emit(self.__esp3_callbacks, packet)
+
+        match packet.packet_type:
+            case ESP3PacketType.RESPONSE:
+                self.__process_response_packet(packet)
+
+            case ESP3PacketType.RADIO_ERP1:
+                self.__process_erp1_packet(packet)
+
+    def __process_response_packet(self, packet: ESP3Packet):
+        """Process a received RESPONSE packet. If we are currently awaiting a response, try to parse it and store it for the send() method to retrieve."""
+        if not self.__awaiting_response:
             return
 
-        self._emit(self._packet_callbacks, pkt)
-
-        if pkt.packet_type == ESP3PacketType.RADIO_ERP1:
-            self.process_erp1_packet(pkt)
-
-    def process_response_packet(self, pkt: ESP3Packet):
         try:
-            response = ResponseTelegram.from_esp3_packet(pkt)
+            response = ResponseTelegram.from_esp3_packet(packet)
             self.__response = response
+            self.__awaiting_response = False
+
         except Exception as e:
             print(f"Failed to parse response packet: {e}")
             pass
 
-        # try:
-        #     response = ResponseTelegram.from_esp3_packet(pkt)
-        #     self._emit(self._response_callbacks, response)
-        # except Exception:
-        #     pass
-
-    def process_erp1_packet(self, pkt: ESP3Packet):
+    def __process_erp1_packet(self, pkt: ESP3Packet):
         rorg_byte = pkt.data[0]
 
         # UTE teach-in
@@ -193,8 +188,9 @@ class ESP3(asyncio.Protocol):
         else:
             try:
                 erp1 = ERP1Telegram.from_esp3(pkt)
-                self._emit(self._erp1_callbacks, erp1)
-            except Exception:
+                self.__emit(self.__erp1_callbacks, erp1)
+            except Exception as e:
+                print(f"Failed to parse ERP1 packet: {pkt}, error: {e}")
                 pass
 
     # ------------------------------------------------------------------
@@ -202,6 +198,9 @@ class ESP3(asyncio.Protocol):
     # ------------------------------------------------------------------
 
     async def send(self, packet: ESP3Packet) -> ResponseTelegram:
+        """Send an ESP3 packet to the EnOcean module and wait for a response."""
+
+        # construct header
         header = bytes(
             [
                 (len(packet.data) >> 8) & 0xFF,
@@ -211,6 +210,7 @@ class ESP3(asyncio.Protocol):
             ]
         )
 
+        # construct the full frame with sync byte, header, data, optional and CRCs
         frame = bytearray()
         frame.append(SYNC_BYTE)
         frame.extend(header)
@@ -219,15 +219,28 @@ class ESP3(asyncio.Protocol):
         frame.extend(packet.optional)
         frame.append(crc8(packet.data + packet.optional))
 
+        # send the frame
         self.transport.write(frame)
 
         # wait for response
+        duration = 0.0
+        self.__awaiting_response = True
+
         while self.__response is None:
             await asyncio.sleep(0.1)
 
+            if (
+                duration >= 0.5
+            ):  # timeout after 500ms, see EnOcean Serial Protocol (ESP3) - Specification, Section 1.10
+                self.__awaiting_response = False
+                return None
+            else:
+                duration
+
+        # got a response, return it and reset state
+        self.__awaiting_response = False
         response = self.__response
         self.__response = None
-
         return response
 
     async def version_info(self) -> VersionInfo | None:
