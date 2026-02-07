@@ -1,2 +1,2 @@
-# python-enocean-core
-A Python implementation of the core functionalities of EnOcean
+# (python-)enocean-core
+An async implementation of the EnOcean Serial Protocol Version 3.

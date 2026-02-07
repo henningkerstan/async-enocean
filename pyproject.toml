@@ -1,0 +1,92 @@
+[project]
+name = "enocean_core"
+version = "0.0.1"
+authors = [
+  { name="Henning Kerstan", email="mail@henningkerstan.de" },
+]
+description = "An async implementation of the EnOcean Serial Protocol Version 3."
+readme = "README.md"
+requires-python = ">=3.14"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers",
+    "Development Status :: 3 - Alpha"
+]
+license = "Apache-2.0"
+license-files = ["LICENSE*"]
+dependencies = [
+  "pyserial-asyncio-fast==0.16"
+]
+
+[project.urls]
+Homepage = "https://github.com/henningkerstan/python-enocean-core"
+Issues = "https://github.com/henningkerstan/python-enocean-core/issues"
+
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = { attr = "enocean_core.__version__" }
+readme = { file = [ "README.md" ], content-type = "text/markdown" }
+
+[tool.setuptools.packages.find]
+where = [ "." ]
+include = [ "enocean_core*" ]
+
+[tool.setuptools.package-data]
+"*" = [ "*.xml", ]
+
+[tool.mypy]
+python_version = "3.14"
+warn_return_any = true
+warn_unused_configs = true
+
+
+[tool.ruff]
+target-version="py313"
+required-version = ">=0.13.0"
+
+[tool.ruff.lint]
+select = ["I"]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = true
+known-first-party = ["enocean_core"]
+combine-as-imports = true
+split-on-trailing-comma = false
+case-sensitive = true
+
+[tool.bumpversion]
+current_version = "0.0.10"
+parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
+serialize = ["{major}.{minor}.{patch}"]
+search = "{current_version}"
+replace = "{new_version}"
+regex = false
+ignore_missing_version = false
+ignore_missing_files = false
+tag = true
+sign_tags = false
+tag_name = "v{new_version}"
+tag_message = "Bump version: {current_version} → {new_version}"
+allow_dirty = true
+commit = true
+message = "Bump version: {current_version} → {new_version}"
+moveable_tags = []
+commit_args = "--no-verify"
+setup_hooks = []
+pre_commit_hooks = []
+post_commit_hooks = []
+
+# Update version in __init__.py
+[[tool.bumpversion.files]]
+filename = "enocean_core/__init__.py"
+
+# Update date in __init__.py
+[[tool.bumpversion.files]]
+filename = 'enocean_core/__init__.py'
+search = "__date__ = \"\\d{{4}}-\\d{{2}}-\\d{{2}}\""
+replace = "__date__ = \"{now:%Y-%m-%d}\""
+regex = true

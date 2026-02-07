@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.0
+    hooks:
+      - id: ruff-check
+        args:
+          - --fix
+      - id: ruff-format
+        files: ^((enocean_core)/.+)?[^/]+\.(py|pyi)$
+
+  # TODO: Enable this once initial release is done 
+  # - repo: https://github.com/pre-commit/pre-commit-hooks
+  #   rev: v6.0.0  
+  #   hooks:
+  #     - id: no-commit-to-branch
+  #       args:
+  #         - --branch=main

@@ -1,0 +1,67 @@
+name: Publish - build and upload Python package to PyPI
+
+on:
+  push:
+    tags:
+      - 'v*'  # Trigger only on version tags starting with 'v'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
+
+      - name: Build release distributions
+        run: |
+          python3 -m pip install build
+          python3 -m build
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v6
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  # create-release:
+  #   name: Create GitHub Release
+  #   permissions:
+  #     contents: write
+
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v6
+
+  #     - name: Create release
+  #       uses: softprops/action-gh-release@v2
+
+  publish-to-pypi:
+    runs-on: ubuntu-latest
+
+    needs:
+      - build
+
+    permissions:
+      # IMPORTANT: this permission is mandatory for trusted publishing
+      id-token: write
+    
+    environment:
+      name: pypi
+      url: https://pypi.org/project/homeassistant-enocean
+
+    steps:
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@v6
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish release distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
