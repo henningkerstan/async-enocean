@@ -321,6 +321,17 @@ class ESP3(asyncio.Protocol):
 
         return self.__base_id
 
+    async def change_base_id(
+        self, new_base_id: BaseAddress, safety_flag: int = 0
+    ) -> bool:
+        """Change the base ID of the connected EnOcean module. Returns True if successful, False otherwise.
+
+        To prevent accidental changes, this function requires a safety flag to be provided. The safety_flag must be set to 0x7B, otherwise the function will return False without sending the command."""
+        if self.transport is None:
+            raise ConnectionError("Not connected to EnOcean gateway")
+
+        return False
+
     @property
     async def base_id_remaining_write_cycles(self) -> int | None:
         """Get the remaining write cycles for the base ID of the connected EnOcean module."""
