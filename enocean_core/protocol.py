@@ -39,6 +39,7 @@ class ESP3(asyncio.Protocol):
         # self._ute_callbacks: list[UTECallback] = []
 
         self.__version_info: VersionInfo | None = None
+        self.__base_id_remaining_write_cycles: int | None = None
         self.__base_id: BaseAddress | None = None
         self.__eurid: EURID | None = None
 
@@ -152,18 +153,17 @@ class ESP3(asyncio.Protocol):
             del self._buffer[:total_len]
 
     def process_esp3_packet(self, pkt: ESP3Packet):
-        # Emit raw ESP3 packet
+        # response are handled internally only
+        if pkt.packet_type == ESP3PacketType.RESPONSE:
+            self.process_response_packet(pkt)
+            return
+
         self._emit(self._packet_callbacks, pkt)
 
-        match pkt.packet_type:
-            case ESP3PacketType.RESPONSE:
-                self.process_response_packet(pkt)
-
-            case ESP3PacketType.RADIO_ERP1:
-                self.process_erp1_packet(pkt)
+        if pkt.packet_type == ESP3PacketType.RADIO_ERP1:
+            self.process_erp1_packet(pkt)
 
     def process_response_packet(self, pkt: ESP3Packet):
-        print(f"Received response packet: {pkt}")
         try:
             response = ResponseTelegram.from_esp3_packet(pkt)
             self.__response = response
@@ -291,7 +291,21 @@ class ESP3(asyncio.Protocol):
             return None
 
         self.__base_id = BaseAddress.from_bytelist(response.response_data[:4])
+
+        if len(response.optional_data) >= 1:
+            self.__base_id_remaining_write_cycles = response.optional_data[0]
+
         return self.__base_id
+
+    async def base_id_remaining_write_cycles(self) -> int | None:
+        """Get the remaining write cycles for the base ID of the connected EnOcean module."""
+        if self.__base_id_remaining_write_cycles is not None:
+            return self.__base_id_remaining_write_cycles
+
+        await (
+            self.base_id()
+        )  # base_id() will fetch the remaining write cycles as optional data
+        return self.__base_id_remaining_write_cycles
 
     async def eurid(self) -> EURID:
         """Get the EURID of the connected EnOcean module."""
