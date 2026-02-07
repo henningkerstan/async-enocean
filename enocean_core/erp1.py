@@ -83,8 +83,8 @@ class ERP1Telegram:
         elif d is not None and d.is_eurid():
             destination = EURID.from_number(d.to_number())
 
-        dBm = opt[4] if len(opt) > 5 else None
-        sec_level = opt[5] if len(opt) > 6 else None
+        dBm = opt[5] if len(opt) > 5 else None
+        sec_level = opt[6] if len(opt) > 6 else None
 
         return cls(
             rorg=rorg,
