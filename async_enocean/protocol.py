@@ -181,10 +181,15 @@ class ESP3(asyncio.Protocol):
             pass
 
     def __process_erp1_packet(self, pkt: ESP3Packet):
-        rorg_byte = pkt.data[0]
+        rorg: RORG | None = None
+
+        try:
+            rorg = RORG(pkt.data[0])
+        except ValueError:
+            return
 
         # UTE teach-in
-        if rorg_byte == RORG.UTE:
+        if rorg == RORG.RORG_UTE:
             # try:
             #     ute = UTE.from_esp3(pkt)
             #     self._emit(self._ute_callbacks, ute)

@@ -10,9 +10,9 @@ async def main(port: str):
     print(f"Trying to connect to EnOcean module on {port}...")
     protocol = await ESP3.open_serial_port(port)
     protocol.add_packet_callback(lambda pkt: print(f"Received {pkt}"))
-    protocol.add_erp1_callback(lambda erp1: print(f"╰─ parsed to {erp1}"))
+    protocol.add_erp1_callback(lambda erp1: print(f"╰─ successfully parsed to {erp1}"))
     protocol.esp3_send_callbacks.append(lambda pkt: print(f"Sending {pkt}"))
-    protocol.response_callbacks.append(lambda resp: print(f"╰─ parsed to {resp}"))
+    protocol.response_callbacks.append(lambda resp: print(f"╰─ successfully parsed to {resp}"))
 
     await protocol.ready
     print("EnOcean module is ready!")

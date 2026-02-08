@@ -6,11 +6,17 @@ from .esp3 import ESP3Packet, ESP3PacketType
 
 
 class RORG(IntEnum):
-    RPS = 0xF6
-    ONEBS = 0xD5
-    FOURBS = 0xA5
-    VLD = 0xD2
-    UTE = 0xD4
+    RORG_RPS = 0xF6
+    RORG_1BS = 0xD5
+    RORG_4BS = 0xA5
+    RORG_VLD = 0xD2
+    RORG_UTE = 0xD4
+    RORG_MSC = 0xD1
+    RORG_ADT_VLD = 0xA6
+
+    @property
+    def simple_name(self) -> str:
+        return self.name[5:]  # remove "RORG_" prefix
 
 
 class ERP1ParseError(Exception):
@@ -20,7 +26,7 @@ class ERP1ParseError(Exception):
 @dataclass
 class ERP1Telegram:
     rorg: RORG
-    payload: bytes
+    telegram_data: bytes
     sender: EURID | BaseAddress
     status: int
 
@@ -32,8 +38,8 @@ class ERP1Telegram:
 
     def __repr__(self) -> str:
         return (
-            f"ERP1Telegram({self.sender.to_string()}->{self.destination.to_string() if self.destination and not self.destination.is_broadcast() else '*'}, RORG={self.rorg.name}, "
-            f"payload={self.payload.hex().upper()}, "
+            f"ERP1Telegram(RORG={self.rorg.simple_name}, sender={self.sender.to_string()}, destination: {self.destination.to_string() if self.destination else '*'}, "
+            f"telegram_data={self.telegram_data.hex().upper()}, "
             f"status=0x{self.status:02X}, "
             f"sub_tel_num={self.sub_tel_num}, "
             f"dBm={self.dBm}, "
@@ -41,7 +47,7 @@ class ERP1Telegram:
         )
 
     @classmethod
-    def from_esp3(cls, pkt: ESP3Packet):
+    def from_esp3(cls, pkt: ESP3Packet) -> "ERP1Telegram":
         if pkt.packet_type != ESP3PacketType.RADIO_ERP1:
             raise ERP1ParseError("Not an ERP1 telegram")
 
@@ -53,13 +59,64 @@ class ERP1Telegram:
             raise ERP1ParseError(f"ERP1 telegram too short: {len(data)} bytes")
 
         # determine RORG
+        rorg: RORG | None = None
         try:
             rorg = RORG(data[0])
         except ValueError:
             raise ERP1ParseError(f"Unknown RORG: 0x{data[0]:02X}")
 
+        # determine telegram data
+        telegram_data = data[1:-5]
+
+        # match RORG and telegram data length
+        match rorg:
+            case RORG.RORG_RPS:
+                if len(telegram_data) != 1:
+                    raise ERP1ParseError(
+                        f"RPS telegram data must be 1 byte, got {len(telegram_data)} bytes"
+                    )
+
+            case RORG.RORG_1BS:
+                if len(telegram_data) != 1:
+                    raise ERP1ParseError(
+                        f"1BS telegram data must be 1 byte, got {len(telegram_data)} bytes"
+                    )
+
+            case RORG.RORG_4BS:
+                if len(telegram_data) != 4:
+                    raise ERP1ParseError(
+                        f"4BS telegram data must be 4 bytes, got {len(telegram_data)} bytes"
+                    )
+
+            case RORG.RORG_VLD:
+                if len(telegram_data) < 1:
+                    raise ERP1ParseError(
+                        f"VLD telegram data must be at least 1 byte, got {len(telegram_data)} bytes"
+                    )
+                if len(telegram_data) > 14:
+                    raise ERP1ParseError(
+                        f"VLD telegram data must be at most 14 bytes, got {len(telegram_data)} bytes"
+                    )
+
+            case RORG.RORG_MSC:
+                if len(telegram_data) < 1:
+                    raise ERP1ParseError(
+                        f"MSC telegram data must be at least 1 byte, got {len(telegram_data)} bytes"
+                    )
+                if len(telegram_data) > 14:
+                    raise ERP1ParseError(
+                        f"MSC telegram data must be at most 14 bytes, got {len(telegram_data)} bytes"
+                    )
+
         # determine sender address
-        s = Address.from_bytelist(data[-5:-1])
+        try:
+            s = Address.from_bytelist(data[-5:-1])
+        except ValueError:
+            raise ERP1ParseError(
+                f"Invalid sender address in ERP1 telegram: {data[-5:-1].hex().upper()}"
+            )
+
+        # determine if sender is EURID or Base ID
         if s.is_eurid():
             sender = EURID.from_number(s.to_number())
         elif s.is_base_address():
@@ -68,7 +125,6 @@ class ERP1Telegram:
             raise ERP1ParseError(f"Invalid sender address: {sender}")
 
         status = data[-1]
-        payload = data[1:-5]
 
         # parse optional
         sub_tel_num = opt[0] if len(opt) > 0 else None
@@ -86,7 +142,7 @@ class ERP1Telegram:
 
         return cls(
             rorg=rorg,
-            payload=payload,
+            telegram_data=telegram_data,
             sender=sender,
             status=status,
             sub_tel_num=sub_tel_num,
