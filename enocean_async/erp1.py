@@ -33,8 +33,42 @@ class ERP1Telegram:
     sub_tel_num: int | None = None
     dBm: int | None = None
     sec_level: int | None = None
-
     destination: EURID | BroadcastAddress | None = None
+
+    def bitstring_raw_value(self, offset: int=0, size: int=1) -> int:
+        """Extract an integer value from a bitstring within the telegram data given by the offset and size in bits (as in the EEP specification)."""
+        
+        total_bits = 8 * len(self.telegram_data)
+
+        if offset < 0 or size < 1 or offset + size > total_bits:
+            raise ValueError("Invalid offset or length for raw_value")
+        
+        # convert the telegram data to a single integer (treating the bytes as a big-endian bitstring)
+        data_bits = int.from_bytes(self.telegram_data, "big")
+        
+        # calculate how many bits we need to shift right to get the desired bits at the least significant position
+        shift = total_bits - (offset + size)
+
+        # create a mask with exatly 'size' bits set to 1 (by shifting 1 left 'size' times and subtracting 1)
+        mask = (1 << size) - 1
+
+        # shift right and apply the mask to extract the desired bits
+        return (data_bits >> shift) & mask
+    
+
+    def bitstring_scaled_value(self, offset: int=0, size: int=1, scale_min: float=0.0, scale_max: float=1.0) -> float:
+        """Extract a scaled float value from the telegram data."""
+
+        if scale_max <= scale_min:
+            raise ValueError("scale_max must be greater than scale_min")
+
+        raw = self.bitstring_raw_value(offset, size)
+
+        # maximum value that can be represented with 'size' bits is 2^size - 1; due to the parameter checks in bitstring_raw_value, size > 0, hence max_raw >= 1
+        max_raw = (1 << size) - 1  
+
+        return scale_min + (raw / max_raw) * (scale_max - scale_min)
+
 
     def __repr__(self) -> str:
         return (

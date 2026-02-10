@@ -1,3 +1,5 @@
+"""Asynchronous EnOcean Serial Protocol Version 3 (ESP3) implementation."""
+
 import asyncio
 from typing import Callable
 
