@@ -1,8 +1,4 @@
 from enocean_async.eep.d22000.message import D20000FanStatusMessage
-from enocean_async.eep.f602xx.message import (
-    F602XXMessageButtonPressed,
-    F602XXMessageButtonsReleased,
-)
 from enocean_async.eep.handler import EEPHandler
 from enocean_async.erp1.rorg import RORG
 from enocean_async.erp1.telegram import ERP1Telegram
