@@ -4,13 +4,13 @@ import asyncio
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
-    from .gateway import Gateway
+    from ..gateway import Gateway
 
 import serial_asyncio_fast as serial_asyncio
 
-from enocean_async.response import ResponseTelegram
+from enocean_async.esp3.response import ResponseTelegram
 
-from .esp3 import SYNC_BYTE, ESP3Packet, ESP3PacketType, crc8
+from .packet import SYNC_BYTE, ESP3Packet, ESP3PacketType, crc8
 
 
 class EnOceanSerialProtocol3(asyncio.Protocol):

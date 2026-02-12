@@ -3,8 +3,8 @@
 import asyncio
 import sys
 
-from enocean_async.address import BaseAddress
-from enocean_async.protocol import EnOceanSerialProtocol3
+from enocean_async.erp1.address import BaseAddress
+from enocean_async.esp3.protocol import EnOceanSerialProtocol3
 
 
 async def main(port: str):

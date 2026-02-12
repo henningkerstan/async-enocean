@@ -13,7 +13,7 @@ The cases are defined in ENOCEAN SERIAL PROTOCOL (ESP3) - SPECIFICATION, Section
 from dataclasses import dataclass
 from enum import IntEnum
 
-from .esp3 import ESP3Packet, ESP3PacketType
+from .packet import ESP3Packet, ESP3PacketType
 
 
 class ResponseCode(IntEnum):

@@ -3,14 +3,15 @@ from typing import Callable
 
 import serial_asyncio_fast as serial_asyncio
 
-from enocean_async.common_command import CommonCommandTelegram
-from enocean_async.response import ResponseCode, ResponseTelegram
-
-from .address import EURID, BaseAddress
-from .erp1 import RORG, ERP1Telegram
-from .esp3 import ESP3Packet, ESP3PacketType
-from .protocol import EnOceanSerialProtocol3
-from .version import VersionIdentifier, VersionInfo
+from .eep.message import EEPMessage
+from .erp1.address import EURID, BaseAddress
+from .erp1.telegram import RORG, ERP1Telegram
+from .esp3.common_command import CommonCommandTelegram
+from .esp3.packet import ESP3Packet, ESP3PacketType
+from .esp3.protocol import EnOceanSerialProtocol3
+from .esp3.response import ResponseCode, ResponseTelegram
+from .version.id import VersionIdentifier
+from .version.info import VersionInfo
 
 type ESP3Callback = Callable[[ESP3Packet], None]
 type ERP1Callback = Callable[[ERP1Telegram], None]

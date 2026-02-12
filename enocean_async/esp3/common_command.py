@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from enum import IntEnum
 
-from .address import BaseAddress
-from .esp3 import ESP3Packet, ESP3PacketType
+from ..erp1.address import BaseAddress
+from .packet import ESP3Packet, ESP3PacketType
 
 
 class CommonCommandCode(IntEnum):

@@ -3,11 +3,12 @@
 import asyncio
 import sys
 
-from enocean_async.erp1 import RORG
+from enocean_async.erp1.rorg import RORG
+from enocean_async.erp1.telegram import ERP1Telegram
 from enocean_async.gateway import Gateway
 
 
-def erp1_callback(erp1):
+def erp1_callback(erp1: ERP1Telegram):
     print(f"╰─ successfully parsed to {erp1}")
    
     if erp1.rorg == RORG.RORG_VLD:
@@ -18,6 +19,7 @@ def erp1_callback(erp1):
             print(f"  ├─ dim value: {erp1.bitstring_raw_value(8,3)}")
             print(f"  ├─ I/O channel: {erp1.bitstring_raw_value(11,5)}")
             print(f"  └─ output value: {erp1.bitstring_raw_value(17,7)}")
+
 
 async def main(port: str):
     print(f"Setting up EnOcean Gateway for module on {port}...")
