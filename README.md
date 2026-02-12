@@ -8,9 +8,9 @@ What works:
 - Sending ESP3 packets (only tested with Common Command telegrams so far) incl. waiting for response (or time-out) and reacting to the response
 - Retrieving EURID, Base ID and version info from the EnOcean module
 - Changing the Base ID
+- Sending ERP1 telegrams
 
 What is missing/untested:
-- Sending ERP1 telegrams
 - Universal Teach-In (UTE) telegrams
 
 

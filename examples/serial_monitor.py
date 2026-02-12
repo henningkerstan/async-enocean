@@ -3,6 +3,7 @@
 import asyncio
 import sys
 
+from enocean_async.eep.f602xx.decoder import F602XXDecoder
 from enocean_async.erp1.rorg import RORG
 from enocean_async.erp1.telegram import ERP1Telegram
 from enocean_async.gateway import Gateway
@@ -19,6 +20,13 @@ def erp1_callback(erp1: ERP1Telegram):
             print(f"  ├─ dim value: {erp1.bitstring_raw_value(8,3)}")
             print(f"  ├─ I/O channel: {erp1.bitstring_raw_value(11,5)}")
             print(f"  └─ output value: {erp1.bitstring_raw_value(17,7)}")
+
+    elif erp1.rorg == RORG.RORG_RPS:
+        try:
+            decoded = F602XXDecoder()(erp1)
+            print(f"  └─ decoded to {decoded}")
+        except Exception as e:
+            print(f"  ├└─ failed to decode F6-02-xx: {e}")
 
 
 async def main(port: str):
