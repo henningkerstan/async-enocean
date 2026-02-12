@@ -10,5 +10,5 @@ class F602XXMessageButtonPressed(EEPMessage):
 
 
 @dataclass
-class F062XXMessageButtonReleased(EEPMessage):
+class F602XXMessageButtonsReleased(EEPMessage):
     pass
