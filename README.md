@@ -1,7 +1,7 @@
 # enocean-async
-This is a light-weight, asynchronous, fully typed Python implementation of the EnOcean Serial Protocol Version 3 (ESP3) based on 'pyserial-asyncio-fast'. 
+This is a light-weight, asynchronous, fully typed Python implementation of the [EnOcean Serial Protocol Version 3 (ESP3)](https://www.enocean.com/wp-content/uploads/Knowledge-Base/EnOceanSerialProtocol3-1.pdf) based on [pyserial-asyncio-fast](https://pypi.org/project/pyserial-asyncio-fast/). 
 
-**It is currently still a proof of concept (PoC) implementation loosely based on my previous [Node.js implementation](https://www.npmjs.com/package/enocean-core), so anything may change at anytime.**
+**It is currently still a proof of concept (PoC) implementation loosely based on my previous [Node.js implementation](https://www.npmjs.com/package/enocean-core), so anything may change at anytime!‚**
 
 What works:
 - Receiving ESP3 packets and parsing them into ERP1 telegrams
