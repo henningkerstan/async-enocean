@@ -12,39 +12,33 @@ from enocean_async.gateway import Gateway
 
 
 def erp1_callback(erp1: ERP1Telegram):
-    print(f"╰─ successfully parsed to {erp1}")
+    print(f"├─ successfully parsed to {erp1}")
    
     if erp1.rorg == RORG.RORG_VLD:
         command = erp1.bitstring_raw_value(4,4)
-        print(f"  ├─ command: {command}")
+        print(f"├─ command: {command}")
 
         if command == 0x01:
-            print(f"  ├─ dim value: {erp1.bitstring_raw_value(8,3)}")
-            print(f"  ├─ I/O channel: {erp1.bitstring_raw_value(11,5)}")
-            print(f"  └─ output value: {erp1.bitstring_raw_value(17,7)}")
+            print(f"├─ dim value: {erp1.bitstring_raw_value(8,3)}")
+            print(f"├─ I/O channel: {erp1.bitstring_raw_value(11,5)}")
+            print(f"╰─ output value: {erp1.bitstring_raw_value(17,7)}")
 
     elif erp1.rorg == RORG.RORG_RPS:
         try:
             decoded = F602XXDecoder()(erp1)
-            print(f"  └─ decoded to {decoded}")
+            print(f"╰─ decoded to {decoded}")
         except Exception as e:
-            print(f"  └─ FAILED to decode F6-02-xx: {e}")
-
-    
-    elif erp1.rorg == RORG.RORG_UTE:
-        try:
-            ute_message = UTEMessage.from_erp1(erp1)
-            print(f"  └─ decoded to {ute_message}")
-        except Exception as e:
-            print(f"  └─ FAILED to decode UTE message: {e}")
+            print(f"╰─ FAILED to decode F6-02-xx: {e}")
 
 
 async def main(port: str):
     print(f"Setting up EnOcean Gateway for module on {port}...")
     gateway = Gateway(port)
-    gateway.add_packet_callback(lambda pkt: print(f"Received {pkt}"))
-    gateway.add_erp1_callback(erp1_callback)
-    gateway.esp3_send_callbacks.append(lambda pkt: print(f"Sending {pkt}"))
+    gateway.add_esp3_received_callback(lambda pkt: print(f"\nReceived {pkt}"))
+
+    gateway.add_erp1_received_callback(erp1_callback)
+    gateway.add_ute_received_callback(lambda ute: print(f"╰─ successfully parsed to UTE message: {ute}"))
+    gateway.add_esp3_send_callback(lambda pkt: print(f"Sending {pkt}"))
     gateway.response_callbacks.append(lambda resp: print(f"╰─ successfully parsed to {resp}"))
 
     print("Starting gateway...")

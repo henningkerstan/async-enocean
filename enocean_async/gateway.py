@@ -1,11 +1,15 @@
 import asyncio
-from typing import Callable
+from dataclasses import dataclass
+from typing import Callable, Optional
 
 import serial_asyncio_fast as serial_asyncio
 
+from .eep.handler import EEPHandler
+from .eep.id import EEPID
 from .eep.message import EEPMessage
-from .erp1.address import EURID, BaseAddress
+from .erp1.address import EURID, BaseAddress, SenderAddress
 from .erp1.telegram import RORG, ERP1Telegram
+from .erp1.ute import UTEMessage
 from .esp3.common_command import CommonCommandTelegram
 from .esp3.packet import ESP3Packet, ESP3PacketType
 from .esp3.protocol import EnOceanSerialProtocol3
@@ -13,9 +17,25 @@ from .esp3.response import ResponseCode, ResponseTelegram
 from .version.id import VersionIdentifier
 from .version.info import VersionInfo
 
+type RSSI = int
+
 type ESP3Callback = Callable[[ESP3Packet], None]
 type ERP1Callback = Callable[[ERP1Telegram], None]
+
+
+@dataclass
+class EEPCallbackWithFilter:
+    callback: ERP1Callback
+    sender_filter: list[SenderAddress] | None = None
+
+
+type UTECallback = Callable[[UTEMessage, SenderAddress, RSSI], None]
+type EEPMessageCallback = Callable[[EEPMessage, SenderAddress, RSSI], None]
+
+
 type ResponseCallback = Callable[[ResponseTelegram], None]
+
+type NewDeviceCallback = Callable[[SenderAddress], None]
 
 
 class BaseIDChangeError(Exception):
@@ -39,25 +59,65 @@ class Gateway:
         self.__base_id_remaining_write_cycles: int | None = None
         self.__base_id: BaseAddress | None = None
 
+        # device and EEP management
+        self.__known_devices: dict[EURID | BaseAddress, EEPID] = {}
+        self.__detected_devices: list[EURID | BaseAddress] = []
+        self.__eep_handlers: dict[EEPID, EEPHandler] = {}
+
         # callbacks
         self.__esp3_receive_callbacks: list[ESP3Callback] = []
         self.__erp1_receive_callbacks: list[ERP1Callback] = []
-        self.esp3_send_callbacks: list[ESP3Callback] = []
+        self.__ute_receive_callbacks: list[UTECallback] = []
+        self.__eep_receive_callbacks: list[EEPMessageCallback] = []
         self.response_callbacks: list[ResponseCallback] = []
+
+        self.__new_device_callbacks: list[NewDeviceCallback] = []
+
+        self.__esp3_send_callbacks: list[ESP3Callback] = []
 
         # response handling
         self.__awaiting_response: bool = False
         self.__response: ResponseTelegram | None = None
 
     # ------------------------------------------------------------------
-    # Callback registration
+    # callback registration
     # ------------------------------------------------------------------
-    def add_packet_callback(self, cb: ESP3Callback):
+    def add_esp3_received_callback(self, cb: ESP3Callback):
+        """Add a callback that will be called for every received ESP3 packet.
+
+        This is a low-level callback that will be called for every ESP3 packet as they are received from the serial port, before any parsing or processing. This can be useful for debugging or for implementing custom processing of ESP3 packets that is not covered by the built-in functionality of the Gateway class."""
         self.__esp3_receive_callbacks.append(cb)
 
-    def add_erp1_callback(self, cb: ERP1Callback):
+    def add_esp3_send_callback(self, cb: ESP3Callback):
+        """Add a callback that will be called for every ESP3 packet that is sent to the EnOcean module.
+
+        This can be useful for debugging or for implementing custom logging of sent packets."""
+        self.__esp3_send_callbacks.append(cb)
+
+    def add_erp1_received_callback(
+        self, cb: ERP1Callback, sender_filter: list[SenderAddress] | None = None
+    ):
+        """Add a callback that will be called for every received ERP1 telegram. If sender_filter is provided, the callback will only be called for telegrams that have a sender address matching the filter.
+
+        This is a semi-high-level callback that will be called for every received ERP1 telegram after parsing and basic processing, but before any EEP-specific decoding. This can be useful for handling ERP1 telegrams in a custom way, for example by implementing custom decoding for specific RORGs or by handling telegrams from unknown devices."""
         self.__erp1_receive_callbacks.append(cb)
 
+    def add_eep_message_received_callback(
+        self, cb: EEPMessageCallback, sender_filter: list[SenderAddress] | None = None
+    ):
+        """Add a callback that will be called for every received ERP1 telegram that could successfully be decoded as an EEP message. If sender_filter is provided, the callback will only be called for messages that have a sender address matching the filter.
+
+        This is a high-level callback that will be called for every received EEP message after parsing, basic processing, and EEP-specific decoding. Prerequisite for this callback to be called for a message are:
+        - the sender address of the message is known (by adding it to this gateway as known-device along with its EEPID), and
+        - there is an EEPHandler capable of handling the EEPID of the sender device."""
+        self.__eep_receive_callbacks.append(cb)
+
+    def add_ute_received_callback(self, cb: UTECallback):
+        self.__ute_receive_callbacks.append(cb)
+
+    # ------------------------------------------------------------------
+    # start and stop
+    # ------------------------------------------------------------------
     async def start(self) -> None:
         """Open the serial connection to the EnOcean module and start processing incoming packets."""
         loop = asyncio.get_running_loop()
@@ -82,12 +142,15 @@ class Gateway:
             self.__transport.close()
             self.__transport = None
 
+    # ------------------------------------------------------------------
+    # sending commands and receiving responses
+    # ------------------------------------------------------------------
     async def send(self, packet: ESP3Packet) -> ResponseTelegram:
         """Send an ESP3 packet to the EnOcean module and wait for a response."""
 
         # TODO: prevent sending if not connected or if another send is already awaiting a response
 
-        self.__emit(self.esp3_send_callbacks, packet)
+        self.__emit(self.__esp3_send_callbacks, packet)
 
         # send the frame
         self.__transport.write(packet.to_bytes())
@@ -119,6 +182,9 @@ class Gateway:
     def connection_lost(self, exc: Exception | None) -> None:
         self.__transport = None
 
+    # ------------------------------------------------------------------
+    # Gateway properties and methods
+    # ------------------------------------------------------------------
     @property
     async def base_id(self) -> BaseAddress | None:
         """Get the base ID of the connected EnOcean module."""
@@ -267,16 +333,34 @@ class Gateway:
         """Get the EURID of the connected EnOcean module."""
         return (await self.version_info).eurid
 
+    # ------------------------------------------------------------------
+    # Internal packet processing
+    # ------------------------------------------------------------------
     def process_esp3_packet(self, packet: ESP3Packet):
         """Process a received ESP3 packet. This includes emitting the raw packet to registered callbacks and further processing based on packet type."""
         self.__emit(self.__esp3_receive_callbacks, packet)
 
-        match packet.packet_type:
-            case ESP3PacketType.RESPONSE:
-                self.__process_response_packet(packet)
+        # handle packet based on type; currently we only process RESPONSE and RADIO_ERP1 packets, other types are ignored
+        if packet.packet_type == ESP3PacketType.RESPONSE:
+            response: ResponseTelegram
+            try:
+                response = ResponseTelegram.from_esp3_packet(packet)
+            except Exception as e:
+                return
+            self.__process_response(response)
+            return
 
-            case ESP3PacketType.RADIO_ERP1:
-                self.__process_erp1_packet(packet)
+        if packet.packet_type != ESP3PacketType.RADIO_ERP1:
+            return
+
+        # parse to ERP1 telegram; if parsing fails, ignore the packet and return
+        erp1: ERP1Telegram
+        try:
+            erp1 = ERP1Telegram.from_esp3(packet)
+        except Exception as e:
+            return
+
+        self.__process_erp1_telegram(erp1)
 
     def __emit(self, callbacks, obj):
         """Emit an object to all registered callbacks of the given type."""
@@ -284,48 +368,62 @@ class Gateway:
         for cb in callbacks:
             loop.call_soon(cb, obj)
 
-    def __process_response_packet(self, packet: ESP3Packet):
+    def __is_sender_known(self, sender: SenderAddress) -> bool:
+        """Check if the sender address is known (i.e. if we have an EEP ID for it)."""
+        return (
+            sender in self.__known_devices.keys() or sender in self.__detected_devices
+        )
+
+    def __process_response(self, response: ResponseTelegram):
         """Process a received RESPONSE packet. If we are currently awaiting a response, try to parse it and store it for the send() method to retrieve."""
-        self.__emit(self.response_callbacks, ResponseTelegram.from_esp3_packet(packet))
+        self.__emit(self.response_callbacks, response)
 
         if not self.__awaiting_response:
             return
 
-        try:
-            response = ResponseTelegram.from_esp3_packet(packet)
-            self.__response = response
-            self.__awaiting_response = False
+        self.__response = response
+        self.__awaiting_response = False
 
-        except Exception as e:
-            self.__response = None
-            self.__awaiting_response = False
-            pass
+    def __process_erp1_telegram(self, erp1: ERP1Telegram):
+        """Process a received ERP1 telegram. This includes emitting it to registered callbacks and further processing based on RORG and learning bit."""
+        # emit the raw telegram
+        self.__emit(self.__erp1_receive_callbacks, erp1)
 
-    def __process_erp1_packet(self, packet: ESP3Packet):
-        rorg: RORG | None = None
+        # check if sender is known; if not, emit to new device callbacks and add to detected devices list
+        if not self.__is_sender_known(erp1.sender):
+            self.__detected_devices.append(erp1.sender)
+            self.__emit(self.__new_device_callbacks, erp1.sender)
 
-        try:
-            rorg = RORG(packet.data[0])
-        except ValueError:
+        # if it's a UTE telegram, try to parse to UTE message; if parsing fails, ignore the packet and return;
+        if erp1.rorg == RORG.RORG_UTE:
+            try:
+                ute_message = UTEMessage.from_erp1(erp1)
+            except Exception as e:
+                return
+
+            self.__handle_ute_message(ute_message)
             return
 
-        # UTE teach-in
-        if rorg == RORG.RORG_UTE:
-            # try:
-            #     ute = UTE.from_esp3(pkt)
-            #     self._emit(self._ute_callbacks, ute)
-            # except Exception:
-            #     pass
+        # handle 1BS teach-in telegrams; for now, we just ignore them (NOT IMPLEMENTED)
+        if erp1.rorg == RORG.RORG_1BS and erp1.is_learning_telegram:
             pass
 
-        # Normal ERP1 telegram
-        else:
-            try:
-                erp1 = ERP1Telegram.from_esp3(packet)
-                self.__emit(self.__erp1_receive_callbacks, erp1)
-            except Exception as e:
-                print(f"Failed to parse ERP1 packet: {packet}, error: {e}")
-                pass
+        # handle 4BS teach-in telegrams; for now, we just ignore them (NOT IMPLEMENTED)
+        if erp1.rorg == RORG.RORG_4BS and erp1.is_learning_telegram:
+            pass
+
+        # if sender is not known, we cannot decode to EEP message, so we return
+        if not erp1.sender in self.__known_devices:
+            return
+
+        # if we have no EEP handler for the EEP ID of the sender, we cannot decode to EEP message, so we return
+        if not self.__known_devices[erp1.sender] in self.__eep_handlers:
+            return
+
+        # try eep-specific decoding; if it fails, ignore the packet and return
+
+    def __handle_ute_message(self, ute_message: UTEMessage):
+        self.__emit(self.__ute_receive_callbacks, ute_message)
 
     def __handle_eep_message(self, msg: EEPMessage):
         for cb in self.callbacks:

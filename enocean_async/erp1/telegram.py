@@ -105,6 +105,23 @@ class ERP1Telegram:
             f"sec_level={self.sec_level})"
         )
 
+    @property
+    def is_learning_telegram(self) -> bool:
+        """Check if the telegram is a learning telegram (only for 1BS and 4BS telegrams - for other RORGs, will return False)."""
+
+        match self.rorg:
+            case RORG.RORG_1BS:
+                # for 1BS telegrams, the learning bit is on offset 4
+                return self.bitstring_raw_value(4, 1) == 0
+
+            case RORG.RORG_4BS:
+                # for 4BS telegrams, the learning bit is on offset 28
+                return self.bitstring_raw_value(28, 1) == 0
+
+            case _:
+                # for other RORGs, there is no learning bit defined in the specification, so we assume it's not a learning telegram
+                return False
+
     @classmethod
     def from_esp3(cls, pkt: ESP3Packet) -> "ERP1Telegram":
         if pkt.packet_type != ESP3PacketType.RADIO_ERP1:

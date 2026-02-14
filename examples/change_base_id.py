@@ -9,9 +9,9 @@ from enocean_async.gateway import Gateway
 
 async def main(port: str):
     gateway = Gateway(port)
-    gateway.add_packet_callback(lambda pkt: print(f"Received {pkt}"))
-    gateway.add_erp1_callback(lambda erp1: print(f"╰─ successfully parsed to {erp1}"))
-    gateway.esp3_send_callbacks.append(lambda pkt: print(f"Sending {pkt}"))
+    gateway.set_esp3_callback(lambda pkt: print(f"Received {pkt}"))
+    gateway.set_erp1_callback(lambda erp1: print(f"╰─ successfully parsed to {erp1}"))
+    gateway.__esp3_send_callbacks.append(lambda pkt: print(f"Sending {pkt}"))
     gateway.response_callbacks.append(lambda resp: print(f"╰─ successfully parsed to {resp}"))
 
     print("Starting gateway...")

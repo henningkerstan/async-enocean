@@ -8,6 +8,9 @@ For more information on EnOcean addressing, see
   - https://www.enocean.com/de/faq-knowledge-base/what-is-difference-between-base-id-and-chip-id/
 """
 
+type SenderAddress = EURID | BaseAddress
+"""Addresses that can be used as the sender of a telegram. This includes both EURIDs (device addresses) and Base IDs, hence ranges from 00:00:00:00 to FF:FF:FF:80."""
+
 
 class Address:
     """Implementation of the EnOcean four byte (32 bit) addresses to identify devices.
