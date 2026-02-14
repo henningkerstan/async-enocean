@@ -1,5 +1,6 @@
 import asyncio
 from dataclasses import dataclass
+import time
 from typing import Callable, Optional
 
 import serial_asyncio_fast as serial_asyncio
@@ -21,6 +22,12 @@ type RSSI = int
 
 type ESP3Callback = Callable[[ESP3Packet], None]
 type ERP1Callback = Callable[[ERP1Telegram], None]
+
+
+@dataclass
+class SendResult:
+    response: Optional[ResponseTelegram]
+    duration_ms: Optional[float]
 
 
 @dataclass
@@ -75,9 +82,9 @@ class Gateway:
 
         self.__esp3_send_callbacks: list[ESP3Callback] = []
 
-        # response handling
-        self.__awaiting_response: bool = False
-        self.__response: ResponseTelegram | None = None
+        # send handling
+        self.__send_lock: asyncio.Lock = asyncio.Lock()
+        self.__send_future: asyncio.Future | None = None
 
     # ------------------------------------------------------------------
     # callback registration
@@ -145,36 +152,35 @@ class Gateway:
     # ------------------------------------------------------------------
     # sending commands and receiving responses
     # ------------------------------------------------------------------
-    async def send(self, packet: ESP3Packet) -> ResponseTelegram:
-        """Send an ESP3 packet to the EnOcean module and wait for a response."""
+    async def send_esp3_packet(self, packet: ESP3Packet) -> SendResult:
+        """Send an ESP3 packet to the EnOcean module and wait up to 500ms for a response (as per ESP3 specification).
 
-        # TODO: prevent sending if not connected or if another send is already awaiting a response
+        This method is thread-safe and can be called from multiple coroutines concurrently; the send operations will be serialized using an internal lock, and each call will wait for its corresponding response before allowing the next send operation to proceed. The method returns a SendResult object containing the received response (if any) and the duration in milliseconds between sending the request and receiving the response.
+        """
 
-        self.__emit(self.__esp3_send_callbacks, packet)
+        async with self.__send_lock:
+            self.__send_future = asyncio.get_running_loop().create_future()
 
-        # send the frame
-        self.__transport.write(packet.to_bytes())
+            try:
+                # emit to the send callbacks; we do this before sending the packet (WHY?)
+                self.__emit(self.__esp3_send_callbacks, packet)
 
-        # wait for response
-        duration = 0.0
-        self.__awaiting_response = True
+                # start a timer before sending the packet, so that we can measure the time it takes to receive the response after sending the packet
+                start = time.perf_counter()
 
-        while self.__response is None:
-            await asyncio.sleep(0.1)
+                # send the frame
+                self.__transport.write(packet.to_bytes())
+                response: ResponseTelegram | None = await asyncio.wait_for(
+                    self.__send_future, timeout=0.5
+                )
 
-            if (
-                duration >= 0.5
-            ):  # timeout after 500ms, see EnOcean Serial Protocol (ESP3) - Specification, Section 1.10
-                self.__awaiting_response = False
-                return None
-            else:
-                duration
+                # stop the timer and calculate duration
+                end = time.perf_counter()
 
-        # got a response, return it and reset state
-        self.__awaiting_response = False
-        response = self.__response
-        self.__response = None
-        return response
+                return SendResult(response, (end - start) * 1000)
+
+            finally:
+                self.__send_future = None
 
     def connection_made(self) -> None:
         pass
@@ -196,7 +202,8 @@ class Gateway:
 
         # Send GET ID base id request
         cmd = CommonCommandTelegram.CO_RD_IDBASE()
-        response: ResponseTelegram = await self.send(cmd.to_esp3_packet())
+        result: SendResult = await self.send_esp3_packet(cmd.to_esp3_packet())
+        response = result.response
 
         if (
             response is None
@@ -236,7 +243,8 @@ class Gateway:
 
         # send WR ID base id request
         cmd = CommonCommandTelegram.CO_WR_IDBASE(new_base_id)
-        response = await self.send(cmd.to_esp3_packet())
+        send_result = await self.send_esp3_packet(cmd.to_esp3_packet())
+        response = send_result.response
 
         # check response for errors; if we got a response, but it indicates an error, we can be pretty sure that the base ID change failed, so we can raise an exception with the error message
         if response is not None and response.return_code != ResponseCode.OK:
@@ -286,7 +294,8 @@ class Gateway:
 
         # Send GET VERSION request
         cmd = CommonCommandTelegram.CO_RD_VERSION()
-        response = await self.send(cmd.to_esp3_packet())
+        send_result = await self.send_esp3_packet(cmd.to_esp3_packet())
+        response = send_result.response
 
         if (
             response is None
@@ -378,11 +387,8 @@ class Gateway:
         """Process a received RESPONSE packet. If we are currently awaiting a response, try to parse it and store it for the send() method to retrieve."""
         self.__emit(self.response_callbacks, response)
 
-        if not self.__awaiting_response:
-            return
-
-        self.__response = response
-        self.__awaiting_response = False
+        if self.__send_future and not self.__send_future.done():
+            self.__send_future.set_result(response)
 
     def __process_erp1_telegram(self, erp1: ERP1Telegram):
         """Process a received ERP1 telegram. This includes emitting it to registered callbacks and further processing based on RORG and learning bit."""
