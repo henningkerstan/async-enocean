@@ -230,6 +230,9 @@ class Gateway:
             try:
                 # emit to the send callbacks; we do this before sending the packet (WHY?)
                 self.__emit(self.__esp3_send_callbacks, packet)
+                self._logger.debug(
+                    f"Sending ESP3 packet: {packet}. Waiting for response..."
+                )
 
                 # start a timer before sending the packet, so that we can measure the time it takes to receive the response after sending the packet
                 start = time.perf_counter()
@@ -242,6 +245,10 @@ class Gateway:
 
                 # stop the timer and calculate duration
                 end = time.perf_counter()
+
+                self._logger.debug(
+                    f"Received response to sent packet: {response}. Duration: {(end - start) * 1000:.2f} ms"
+                )
 
                 return SendResult(response, (end - start) * 1000)
 
@@ -415,6 +422,8 @@ class Gateway:
         """Process a received ESP3 packet. This includes emitting the raw packet to registered callbacks and further processing based on packet type."""
         self.__emit(self.__esp3_receive_callbacks, packet)
 
+        self._logger.debug(f"Processing received ESP3 packet: {packet}")
+
         # handle packet based on type; currently we only process RESPONSE and RADIO_ERP1 packets, other types are ignored
         if packet.packet_type == ESP3PacketType.RESPONSE:
             response: ResponseTelegram
@@ -452,6 +461,7 @@ class Gateway:
     def __process_response(self, response: ResponseTelegram):
         """Process a received RESPONSE packet. If we are currently awaiting a response, try to parse it and store it for the send() method to retrieve."""
         self.__emit(self.response_callbacks, response)
+        self._logger.debug(f"Processing received RESPONSE packet: {response}")
 
         if self.__send_future and not self.__send_future.done():
             self.__send_future.set_result(response)
@@ -460,11 +470,13 @@ class Gateway:
         """Process a received ERP1 telegram. This includes emitting it to registered callbacks and further processing based on RORG and learning bit."""
         # emit the raw telegram
         self.__emit(self.__erp1_receive_callbacks, erp1)
+        self._logger.debug(f"Processing received ERP1 telegram: {erp1}")
 
         # check if sender is known; if not, emit to new device callbacks and add to detected devices list
         if not self.__is_sender_known(erp1.sender):
             self.__detected_devices.append(erp1.sender)
             self.__emit(self.__new_device_callbacks, erp1.sender)
+            self._logger.info(f"New device detected with sender address: {erp1.sender}")
 
         # if it's a UTE telegram, try to parse to UTE message; if parsing fails, ignore the packet and return;
         if erp1.rorg == RORG.RORG_UTE:

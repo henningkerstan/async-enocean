@@ -14,11 +14,11 @@ from enocean_async.gateway import Gateway
 
 class ColorFormatter(logging.Formatter):
     COLORS = {
-        logging.DEBUG:    "\033[37m",  # white/gray
-        logging.INFO:     "\033[36m",  # cyan
-        logging.WARNING:  "\033[33m",  # yellow
-        logging.ERROR:    "\033[31m",  # red
-        logging.CRITICAL: "\033[41m",  # red background
+        logging.DEBUG:    "\033[96;1m",   # bright cyan
+        logging.INFO:     "\033[95;1m",   # bright magenta
+        logging.WARNING:  "\033[93;1m",   # bright yellow
+        logging.ERROR:    "\033[91;1m",   # bright red
+        logging.CRITICAL: "\033[97;1;41m",  # bright white on red background
     }
     RESET = "\033[0m"
 
