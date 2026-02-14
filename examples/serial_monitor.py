@@ -39,6 +39,7 @@ async def main(port: str):
     gateway.add_erp1_received_callback(erp1_callback)
     gateway.add_ute_received_callback(lambda ute: print(f"╰─ successfully parsed to UTE message: {ute}"))
     gateway.add_esp3_send_callback(lambda pkt: print(f"Sending {pkt}"))
+    gateway.add_new_device_callback(lambda addr: print(f"├─ new device detected with address {addr}"))
     gateway.response_callbacks.append(lambda resp: print(f"╰─ successfully parsed to {resp}"))
 
     print("Starting gateway...")

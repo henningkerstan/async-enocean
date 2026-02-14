@@ -10,7 +10,12 @@ from .eep.id import EEPID
 from .eep.message import EEPMessage
 from .erp1.address import EURID, BaseAddress, SenderAddress
 from .erp1.telegram import RORG, ERP1Telegram
-from .erp1.ute import UTEMessage
+from .erp1.ute import (
+    EEPTeachInResponseMessageExpectation,
+    UTEMessage,
+    UTEQueryRequestType,
+    UTEResponseType,
+)
 from .esp3.common_command import CommonCommandTelegram
 from .esp3.packet import ESP3Packet, ESP3PacketType
 from .esp3.protocol import EnOceanSerialProtocol3
@@ -89,6 +94,7 @@ class Gateway:
         # learning
         self.__is_learning: bool = False
         self.__learning_timeout_task: asyncio.Task | None = None
+        self.__allow_teach_out: bool = False
 
     # ------------------------------------------------------------------
     # callback registration
@@ -104,6 +110,12 @@ class Gateway:
 
         This can be useful for debugging or for implementing custom logging of sent packets."""
         self.__esp3_send_callbacks.append(cb)
+
+    def add_new_device_callback(self, cb: NewDeviceCallback):
+        """Add a callback that will be called for every newly detected sender address (EURID or Base ID) from incoming ERP1 telegrams.
+
+        This can be useful for implementing custom handling of new devices."""
+        self.__new_device_callbacks.append(cb)
 
     def add_erp1_received_callback(
         self, cb: ERP1Callback, sender_filter: list[SenderAddress] | None = None
@@ -153,9 +165,13 @@ class Gateway:
             self.__transport.close()
             self.__transport = None
 
-    def start_learning(self, timeout_seconds: int = 60) -> None:
+    def start_learning(
+        self, timeout_seconds: int = 60, allow_teach_out: bool = False
+    ) -> None:
         """Start learning mode."""
         self.__is_learning = True
+        self.__allow_teach_out = allow_teach_out
+
         print(
             f"Learning mode started. Will automatically stop after {timeout_seconds} seconds."
         )
@@ -444,11 +460,13 @@ class Gateway:
 
         # handle 1BS teach-in telegrams; for now, we just ignore them (NOT IMPLEMENTED)
         if erp1.rorg == RORG.RORG_1BS and erp1.is_learning_telegram:
-            pass
+            self.__handle_1bs_teach_in_telegram(erp1)
+            return
 
         # handle 4BS teach-in telegrams; for now, we just ignore them (NOT IMPLEMENTED)
         if erp1.rorg == RORG.RORG_4BS and erp1.is_learning_telegram:
-            pass
+            self.__handle_4bs_teach_in_telegram(erp1)
+            return
 
         # if sender is not known, we cannot decode to EEP message, so we return
         if not erp1.sender in self.__known_devices:
@@ -462,6 +480,38 @@ class Gateway:
 
     def __handle_ute_message(self, ute_message: UTEMessage):
         self.__emit(self.__ute_receive_callbacks, ute_message)
+
+        # if we are not currently in learning mode, we ignore all UTE messages, because they are only relevant during learning mode
+        if not self.__is_learning:
+            return
+
+        # ignore response messages, we only want to process teach-in query messages during learning mode
+        if isinstance(ute_message.request_type, UTEResponseType):
+            return
+
+        request_type = ute_message.request_type
+        response_expected = (
+            ute_message.teach_in_response_message_expectation
+            == EEPTeachInResponseMessageExpectation.RESPONSE_EXPECTED
+        )
+
+        match request_type:
+            case UTEQueryRequestType.TEACH_IN:
+                print(f"Received UTE teach-in query message: {ute_message}")
+
+            case UTEQueryRequestType.TEACH_IN_DELETION:
+                print(f"Received UTE teach-in deletion query message: {ute_message}")
+
+            case UTEQueryRequestType.TEACH_IN_OR_DELETION_OF_TEACH_IN:
+                print(
+                    f"Received UTE teach-in or deletion of teach-in query message: {ute_message}"
+                )
+
+    def __handle_1bs_teach_in_telegram(self, erp1: ERP1Telegram):
+        pass
+
+    def __handle_4bs_teach_in_telegram(self, erp1: ERP1Telegram):
+        pass
 
     def __handle_eep_message(self, msg: EEPMessage):
         for cb in self.callbacks:
