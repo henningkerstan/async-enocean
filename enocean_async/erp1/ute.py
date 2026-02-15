@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Optional
 
-from enocean_async.eep.manufacturers import Manufacturers
+from enocean_async.eep.manufacturer import Manufacturer
 from enocean_async.erp1.errors import ERP1ParseError
 from enocean_async.esp3.packet import ESP3Packet, ESP3PacketType
 
@@ -49,7 +49,7 @@ class UTEMessage:
     request_type: UTEQueryRequestType | UTEResponseType
     command: CommandIdentifier
     number_of_channels_to_be_taught_in: int
-    manufacturer: Manufacturers
+    manufacturer: Manufacturer
     eep: EEPID
 
     @classmethod
@@ -86,11 +86,11 @@ class UTEMessage:
         manufacturer_id_msb = telegram.data_byte(3) & 0b00000111
         manufacturer_id = (manufacturer_id_msb << 8) | manufacturer_id_lsb
 
-        manufacturer: Manufacturers
+        manufacturer: Manufacturer
         try:
-            manufacturer = Manufacturers(manufacturer_id)
+            manufacturer = Manufacturer(manufacturer_id)
         except ValueError:
-            manufacturer = Manufacturers.Reserved
+            manufacturer = Manufacturer.Reserved
 
         eep = EEPID(
             type_=telegram.data_byte(2),

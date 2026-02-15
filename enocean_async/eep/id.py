@@ -1,18 +1,20 @@
 from dataclasses import dataclass
 
+from .manufacturer import Manufacturer
+
 
 @dataclass
 class EEPID:
     """Representation of an EnOcean Equipment Profile (EEP)."""
 
     def __init__(
-        self, rorg: int, func: int, type_: int, manufacturer_id: int | None = None
+        self, rorg: int, func: int, type_: int, manufacturer: Manufacturer | None = None
     ) -> None:
         """Construct an EnOcean Equipment Profile."""
         self.rorg = rorg
         self.func = func
         self.type = type_
-        self.manufacturer_id = manufacturer_id  # see https://www.enocean.com/wp-content/uploads/application-notes/new_AN514_EnOcean_Link_Profiles.pdf
+        self.manufacturer = manufacturer  # see https://www.enocean.com/wp-content/uploads/application-notes/new_AN514_EnOcean_Link_Profiles.pdf
 
     @classmethod
     def from_string(cls, eep_string: str) -> "EEPID":
@@ -30,4 +32,4 @@ class EEPID:
         return f"{self.rorg:02X}-{self.func:02X}-{self.type:02X}"
 
     def __repr__(self) -> str:
-        return f"EEP({self.to_string()}{'.' + str(self.manufacturer_id) if self.manufacturer_id is not None else ''})"
+        return f"EEP({self.to_string()}{'.' + str(self.manufacturer) if self.manufacturer is not None else ''})"

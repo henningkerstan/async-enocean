@@ -1,7 +1,7 @@
 from enum import IntEnum
 
 
-class Manufacturers(IntEnum):
+class Manufacturer(IntEnum):
     Reserved = 0x000
     PEHA = 0x001
     THERMOKON = 0x002
