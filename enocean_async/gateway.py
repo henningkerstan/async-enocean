@@ -27,9 +27,6 @@ from .version.info import VersionInfo
 
 type RSSI = int
 
-type ESP3Callback = Callable[[ESP3Packet], None]
-type ERP1Callback = Callable[[ERP1Telegram], None]
-
 
 @dataclass
 class SendResult:
@@ -37,21 +34,30 @@ class SendResult:
     duration_ms: Optional[float]
 
 
-@dataclass
-class EEPCallbackWithFilter:
-    callback: ERP1Callback
-    sender_filter: list[SenderAddress] | None = None
-
-
-type UTECallback = Callable[[UTEMessage, SenderAddress, RSSI], None]
-type EEPMessageCallback = Callable[[EEPMessage, SenderAddress, RSSI], None]
-
-
+# callback types
+type ESP3Callback = Callable[[ESP3Packet], None]
+type ERP1Callback = Callable[[ERP1Telegram], None]
+type EEPMessageCallback = Callable[[EEPMessage], None]
+type UTECallback = Callable[[UTEMessage], None]
 type ResponseCallback = Callable[[ResponseTelegram], None]
-
 type NewDeviceCallback = Callable[[SenderAddress], None]
-
 type ParsingFailedCallback = Callable[[str], None]
+
+
+@dataclass
+class CallbackWithFilter:
+    callback: Callable
+    sender_filter: SenderAddress | None = None
+
+
+@dataclass
+class ERP1CallbackWithFilter(CallbackWithFilter):
+    callback: ERP1Callback
+
+
+@dataclass
+class EEPCallbackWithFilter(CallbackWithFilter):
+    callback: EEPMessageCallback
 
 
 class BaseIDChangeError(Exception):
@@ -82,9 +88,9 @@ class Gateway:
 
         # callbacks
         self.__esp3_receive_callbacks: list[ESP3Callback] = []
-        self.__erp1_receive_callbacks: list[ERP1Callback] = []
+        self.__erp1_receive_callbacks: list[ERP1CallbackWithFilter] = []
         self.__ute_receive_callbacks: list[UTECallback] = []
-        self.__eep_receive_callbacks: list[EEPMessageCallback] = []
+        self.__eep_receive_callbacks: list[EEPCallbackWithFilter] = []
         self.__parsing_failed_callbacks: list[ParsingFailedCallback] = []
         self.response_callbacks: list[ResponseCallback] = []
 
@@ -130,22 +136,22 @@ class Gateway:
         self.__new_device_callbacks.append(cb)
 
     def add_erp1_received_callback(
-        self, cb: ERP1Callback, sender_filter: list[SenderAddress] | None = None
+        self, cb: ERP1Callback, sender_filter: SenderAddress | None = None
     ):
         """Add a callback that will be called for every received ERP1 telegram. If sender_filter is provided, the callback will only be called for telegrams that have a sender address matching the filter.
 
         This is a semi-high-level callback that will be called for every received ERP1 telegram after parsing and basic processing, but before any EEP-specific decoding. This can be useful for handling ERP1 telegrams in a custom way, for example by implementing custom decoding for specific RORGs or by handling telegrams from unknown devices."""
-        self.__erp1_receive_callbacks.append(cb)
+        self.__erp1_receive_callbacks.append(ERP1CallbackWithFilter(cb, sender_filter))
 
     def add_eep_message_received_callback(
-        self, cb: EEPMessageCallback, sender_filter: list[SenderAddress] | None = None
+        self, cb: EEPMessageCallback, sender_filter: SenderAddress | None = None
     ):
         """Add a callback that will be called for every received ERP1 telegram that could successfully be decoded as an EEP message. If sender_filter is provided, the callback will only be called for messages that have a sender address matching the filter.
 
         This is a high-level callback that will be called for every received EEP message after parsing, basic processing, and EEP-specific decoding. Prerequisite for this callback to be called for a message are:
         - the sender address of the message is known (by adding it to this gateway as known-device along with its EEPID), and
         - there is an EEPHandler capable of handling the EEPID of the sender device."""
-        self.__eep_receive_callbacks.append(cb)
+        self.__eep_receive_callbacks.append(EEPCallbackWithFilter(cb, sender_filter))
 
     def add_ute_received_callback(self, cb: UTECallback):
         self.__ute_receive_callbacks.append(cb)
@@ -488,11 +494,20 @@ class Gateway:
 
         self.__process_erp1_telegram(erp1)
 
-    def __emit(self, callbacks, obj):
+    def __emit(self, callbacks: list[Callable], obj):
         """Emit an object to all registered callbacks of the given type."""
         loop = asyncio.get_running_loop()
         for cb in callbacks:
             loop.call_soon(cb, obj)
+
+    def __emit_with_sender_filter(
+        self, callbacks: list[CallbackWithFilter], sender: SenderAddress, obj
+    ):
+        """Emit an object to all registered callbacks of the given type that have a sender filter matching the sender address."""
+        loop = asyncio.get_running_loop()
+        for cb in callbacks:
+            if cb.sender_filter is None or cb.sender_filter == sender:
+                loop.call_soon(cb.callback, obj)
 
     def __is_sender_known(self, sender: SenderAddress) -> bool:
         """Check if the sender address is known (i.e. if we have an EEP ID for it)."""
@@ -511,7 +526,7 @@ class Gateway:
     def __process_erp1_telegram(self, erp1: ERP1Telegram):
         """Process a received ERP1 telegram. This includes emitting it to registered callbacks and further processing based on RORG and learning bit."""
         # emit the raw telegram
-        self.__emit(self.__erp1_receive_callbacks, erp1)
+        self.__emit_with_sender_filter(self.__erp1_receive_callbacks, erp1.sender, erp1)
         self._logger.debug(f"ESP3 packet successfully decoded to ERP1 telegram: {erp1}")
 
         # check if sender is known; if not, emit to new device callbacks and add to detected devices list
@@ -561,7 +576,9 @@ class Gateway:
         # try eep-specific decoding; if it fails, ignore the packet and return
         try:
             eep_message = self.__eep_handlers[self.__known_devices[erp1.sender]](erp1)
-            self.__emit(self.__eep_receive_callbacks, eep_message)
+            self.__emit_with_sender_filter(
+                self.__eep_receive_callbacks, erp1.sender, eep_message
+            )
             self._logger.debug(
                 f"ERP1 telegram successfully decoded to EEP message: {eep_message}"
             )
