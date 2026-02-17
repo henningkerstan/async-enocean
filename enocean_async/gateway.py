@@ -6,8 +6,7 @@ from typing import Callable, Optional
 
 import serial_asyncio_fast as serial_asyncio
 
-from enocean_async.eep.db import EEP_DATABASE
-
+from .eep.db import EEP_DATABASE
 from .eep.handler import EEPHandler
 from .eep.id import EEPID
 from .eep.message import EEPMessage
