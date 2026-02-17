@@ -51,6 +51,8 @@ type ResponseCallback = Callable[[ResponseTelegram], None]
 
 type NewDeviceCallback = Callable[[SenderAddress], None]
 
+type ParsingFailedCallback = Callable[[str], None]
+
 
 class BaseIDChangeError(Exception):
     pass
@@ -83,6 +85,7 @@ class Gateway:
         self.__erp1_receive_callbacks: list[ERP1Callback] = []
         self.__ute_receive_callbacks: list[UTECallback] = []
         self.__eep_receive_callbacks: list[EEPMessageCallback] = []
+        self.__parsing_failed_callbacks: list[ParsingFailedCallback] = []
         self.response_callbacks: list[ResponseCallback] = []
 
         self.__new_device_callbacks: list[NewDeviceCallback] = []
@@ -146,6 +149,9 @@ class Gateway:
 
     def add_ute_received_callback(self, cb: UTECallback):
         self.__ute_receive_callbacks.append(cb)
+
+    def add_parsing_failed_callback(self, cb: ParsingFailedCallback):
+        self.__parsing_failed_callbacks.append(cb)
 
     # ------------------------------------------------------------------
     # start and stop
@@ -458,7 +464,7 @@ class Gateway:
         """Process a received ESP3 packet. This includes emitting the raw packet to registered callbacks and further processing based on packet type."""
         self.__emit(self.__esp3_receive_callbacks, packet)
 
-        self._logger.debug(f"Processing received ESP3 packet: {packet}")
+        self._logger.debug(f"Received ESP3 packet: {packet}")
 
         # handle packet based on type; currently we only process RESPONSE and RADIO_ERP1 packets, other types are ignored
         if packet.packet_type == ESP3PacketType.RESPONSE:
@@ -506,7 +512,7 @@ class Gateway:
         """Process a received ERP1 telegram. This includes emitting it to registered callbacks and further processing based on RORG and learning bit."""
         # emit the raw telegram
         self.__emit(self.__erp1_receive_callbacks, erp1)
-        self._logger.debug(f"Processing received ERP1 telegram: {erp1}")
+        self._logger.debug(f"ESP3 packet successfully decoded to ERP1 telegram: {erp1}")
 
         # check if sender is known; if not, emit to new device callbacks and add to detected devices list
         if not self.__is_sender_known(erp1.sender):
@@ -536,13 +542,36 @@ class Gateway:
 
         # if sender is not known, we cannot decode to EEP message, so we return
         if not erp1.sender in self.__known_devices:
+            msg = f"Failed to decode ERP1 telegram to EEP message: sender {erp1.sender} is unknown."
+            self._logger.debug(msg)
+            self.__emit(self.__parsing_failed_callbacks, msg)
             return
 
         # if we have no EEP handler for the EEP ID of the sender, we cannot decode to EEP message, so we return
         if not self.__known_devices[erp1.sender] in self.__eep_handlers:
+            self._logger.debug(
+                f"Failed to decode ERP1 telegram to EEP message: No EEP handler for {self.__known_devices[erp1.sender]}."
+            )
+            self.__emit(
+                self.__parsing_failed_callbacks,
+                f"Failed to decode ERP1 telegram to EEP message: No EEP handler for {self.__known_devices[erp1.sender]}.",
+            )
             return
 
         # try eep-specific decoding; if it fails, ignore the packet and return
+        try:
+            eep_message = self.__eep_handlers[self.__known_devices[erp1.sender]](erp1)
+            self.__emit(self.__eep_receive_callbacks, eep_message)
+            self._logger.debug(
+                f"ERP1 telegram successfully decoded to EEP message: {eep_message}"
+            )
+        except Exception as e:
+            self._logger.debug(f"Failed to decode ERP1 telegram to EEP message: {e}")
+            self.__emit(
+                self.__parsing_failed_callbacks,
+                f"Failed to decode ERP1 telegram to EEP message: {e}",
+            )
+            return
 
     def __handle_ute_message(self, ute_message: UTEMessage):
         self.__emit(self.__ute_receive_callbacks, ute_message)

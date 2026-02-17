@@ -5,11 +5,8 @@ import logging
 import signal
 import sys
 
-from enocean_async.eep.db import EEP_DATABASE
-from enocean_async.eep.handler import EEPHandler
 from enocean_async.eep.id import EEPID
-from enocean_async.erp1.rorg import RORG
-from enocean_async.erp1.telegram import ERP1Telegram
+from enocean_async.erp1.address import EURID
 from enocean_async.gateway import Gateway
 
 
@@ -27,39 +24,22 @@ class ColorFormatter(logging.Formatter):
         color = self.COLORS.get(record.levelno, self.RESET)
         message = super().format(record)
         return f"{color}{message}{self.RESET}"
-
-
-
-def erp1_callback(erp1: ERP1Telegram):
-    print(f"├─ successfully parsed to {erp1}")
-   
-    if erp1.rorg == RORG.RORG_VLD:
-        command = erp1.bitstring_raw_value(4,4)
-        print(f"├─ command: {command}")
-
-        if command == 0x01:
-            print(f"├─ dim value: {erp1.bitstring_raw_value(8,3)}")
-            print(f"├─ I/O channel: {erp1.bitstring_raw_value(11,5)}")
-            print(f"╰─ output value: {erp1.bitstring_raw_value(17,7)}")
-
-    elif erp1.rorg == RORG.RORG_RPS:
-        try:
-            decoded = EEPHandler(EEP_DATABASE.get(EEPID.from_string("F6-02-01")))(erp1)
-            print(f"╰─ decoded to {decoded}")
-        except Exception as e:
-            print(f"╰─ FAILED to decode F6-02-01: {e}")
-
+    
+CHECKMARK = "\033[92m✓\033[0m"
+CROSSMARK = "\033[91m✗\033[0m"
+EXCLAMATIONMARK = "\033[93m!\033[0m"
+         
 
 async def main(port: str):
-    
+    # set up main loop with exit handler
     loop = asyncio.get_running_loop() 
     stop_event = asyncio.Event() 
     loop.add_signal_handler(signal.SIGINT, stop_event.set) 
     loop.add_signal_handler(signal.SIGTERM, stop_event.set)
 
+    # set up logging
     handler = logging.StreamHandler()
     handler.setFormatter(ColorFormatter( "%(asctime)s.%(msecs)03d [%(levelname)s] %(name)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S" ))
-
     logging.basicConfig(
         level=logging.DEBUG,
         handlers=[handler]
@@ -67,13 +47,18 @@ async def main(port: str):
 
     print(f"Setting up EnOcean Gateway for module on {port}...")
     gateway = Gateway(port)
-    gateway.add_esp3_received_callback(lambda pkt: print(f"\nReceived {pkt}"))
 
-    gateway.add_erp1_received_callback(erp1_callback)
-    gateway.add_ute_received_callback(lambda ute: print(f"╰─ successfully parsed to UTE message: {ute}"))
+    # receive callbacks
+    gateway.add_esp3_received_callback(lambda pkt: print(f"\nReceived {pkt}"))
+    gateway.add_erp1_received_callback(lambda erp1: print(f"├─ {CHECKMARK} successfully parsed to ERP1 telegram: {erp1}"))
+    gateway.add_new_device_callback(lambda addr: print(f"├─ {EXCLAMATIONMARK} new device: {addr}"))
+    gateway.add_eep_message_received_callback(lambda msg: print(f"╰─ {CHECKMARK} successfully parsed to EEP message: {msg}"))
+    gateway.add_ute_received_callback(lambda ute: print(f"╰─ {CHECKMARK} successfully parsed to UTE message: {ute}"))
+    gateway.response_callbacks.append(lambda resp: print(f"╰─ {CHECKMARK} successfully parsed to {resp}"))
+    gateway.add_parsing_failed_callback(lambda msg: print(f"╰─ {CROSSMARK} Further parsing failed: {msg}"))
+
     gateway.add_esp3_send_callback(lambda pkt: print(f"Sending {pkt}"))
-    gateway.add_new_device_callback(lambda addr: print(f"├─ new device detected with address {addr}"))
-    gateway.response_callbacks.append(lambda resp: print(f"╰─ successfully parsed to {resp}"))
+
 
     print("Starting gateway...")
     await gateway.start()
@@ -88,6 +73,10 @@ async def main(port: str):
     print(f"App version: {version_info.app_version.version_string}")
     print(f"API version: {version_info.api_version.version_string}")
     print(f"Device version: {version_info.device_version}")
+
+    # add some devices - adopt to your own devices and EEPs
+    gateway.add_device(EURID.from_string("00:00:00:01"), EEPID.from_string("F6-02-02"))
+    gateway.add_device(EURID.from_string("00:00:00:02"), EEPID.from_string("F6-02-01"))
 
     gateway.start_learning(timeout_seconds=5)
 
