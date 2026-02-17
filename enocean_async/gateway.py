@@ -92,7 +92,7 @@ class Gateway:
         self.__ute_receive_callbacks: list[UTECallback] = []
         self.__eep_receive_callbacks: list[EEPCallbackWithFilter] = []
         self.__parsing_failed_callbacks: list[ParsingFailedCallback] = []
-        self.response_callbacks: list[ResponseCallback] = []
+        self.__response_callbacks: list[ResponseCallback] = []
 
         self.__new_device_callbacks: list[NewDeviceCallback] = []
 
@@ -158,6 +158,9 @@ class Gateway:
 
     def add_parsing_failed_callback(self, cb: ParsingFailedCallback):
         self.__parsing_failed_callbacks.append(cb)
+
+    def add_response_callback(self, cb: ResponseCallback):
+        self.__response_callbacks.append(cb)
 
     # ------------------------------------------------------------------
     # start and stop
@@ -517,7 +520,7 @@ class Gateway:
 
     def __process_response(self, response: ResponseTelegram):
         """Process a received RESPONSE packet. If we are currently awaiting a response, try to parse it and store it for the send() method to retrieve."""
-        self.__emit(self.response_callbacks, response)
+        self.__emit(self.__response_callbacks, response)
         self._logger.debug(f"Processing received RESPONSE packet: {response}")
 
         if self.__send_future and not self.__send_future.done():

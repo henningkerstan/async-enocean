@@ -6,13 +6,22 @@ import sys
 from enocean_async.erp1.address import BaseAddress
 from enocean_async.gateway import Gateway
 
-
+CHECKMARK = "\033[92m✓\033[0m"
+CROSSMARK = "\033[91m✗\033[0m"
+EXCLAMATIONMARK = "\033[93m!\033[0m"
+         
 async def main(port: str):
     gateway = Gateway(port)
-    gateway.set_esp3_callback(lambda pkt: print(f"Received {pkt}"))
-    gateway.set_erp1_callback(lambda erp1: print(f"╰─ successfully parsed to {erp1}"))
-    gateway.__esp3_send_callbacks.append(lambda pkt: print(f"Sending {pkt}"))
-    gateway.response_callbacks.append(lambda resp: print(f"╰─ successfully parsed to {resp}"))
+    
+    # callback registration
+    gateway.add_esp3_received_callback(lambda pkt: print(f"\nReceived {pkt}"))
+    gateway.add_erp1_received_callback(lambda erp1: print(f"├─ {CHECKMARK} successfully parsed to ERP1 telegram: {erp1}"))
+    gateway.add_new_device_callback(lambda addr: print(f"├─ {EXCLAMATIONMARK} new device: {addr}"))
+    gateway.add_eep_message_received_callback(lambda msg: print(f"╰─ {CHECKMARK} successfully parsed to EEP message: {msg}"))
+    gateway.add_ute_received_callback(lambda ute: print(f"╰─ {CHECKMARK} successfully parsed to UTE message: {ute}"))
+    gateway.add_response_callback(lambda resp: print(f"╰─ {CHECKMARK} successfully parsed to {resp}"))
+    gateway.add_parsing_failed_callback(lambda msg: print(f"╰─ {CROSSMARK} Further parsing failed: {msg}"))
+    gateway.add_esp3_send_callback(lambda pkt: print(f"Sending {pkt}"))
 
     print("Starting gateway...")
     await gateway.start()

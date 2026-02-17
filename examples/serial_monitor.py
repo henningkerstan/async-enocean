@@ -48,15 +48,14 @@ async def main(port: str):
     print(f"Setting up EnOcean Gateway for module on {port}...")
     gateway = Gateway(port)
 
-    # receive callbacks
+    # callback registration
     gateway.add_esp3_received_callback(lambda pkt: print(f"\nReceived {pkt}"))
     gateway.add_erp1_received_callback(lambda erp1: print(f"├─ {CHECKMARK} successfully parsed to ERP1 telegram: {erp1}"))
     gateway.add_new_device_callback(lambda addr: print(f"├─ {EXCLAMATIONMARK} new device: {addr}"))
     gateway.add_eep_message_received_callback(lambda msg: print(f"╰─ {CHECKMARK} successfully parsed to EEP message: {msg}"))
     gateway.add_ute_received_callback(lambda ute: print(f"╰─ {CHECKMARK} successfully parsed to UTE message: {ute}"))
-    gateway.response_callbacks.append(lambda resp: print(f"╰─ {CHECKMARK} successfully parsed to {resp}"))
+    gateway.add_response_callback(lambda resp: print(f"╰─ {CHECKMARK} successfully parsed to {resp}"))
     gateway.add_parsing_failed_callback(lambda msg: print(f"╰─ {CROSSMARK} Further parsing failed: {msg}"))
-
     gateway.add_esp3_send_callback(lambda pkt: print(f"Sending {pkt}"))
 
 
