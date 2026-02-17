@@ -19,22 +19,22 @@ class EEPDataField:
     size: int
     """Size of the data field in bits."""
 
-    range_min: int | None
+    range_min: int | None = None
     """Minimum value of the data field's range."""
 
-    range_max: int | None
+    range_max: int | None = None
     """Maximum value of the data field's range."""
 
-    scale_min: float | None
+    scale_min: float | None = None
     """Minimum value of the data field's scaled value."""
 
-    scale_max: float | None
+    scale_max: float | None = None
     """Maximum value of the data field's scaled value."""
 
-    range_enum: dict[int, str] | None
+    range_enum: dict[int, str] | None = None
     """Enumeration of possible values for the data field, if applicable."""
 
-    unit: str | None
+    unit: str | None = None
     """Unit of the data field, such as '°C' for temperature or '%' for humidity."""
 
 
