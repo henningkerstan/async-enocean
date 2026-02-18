@@ -151,7 +151,7 @@ class Address:
         return self.__address
 
     def __eq__(self, other):
-        return self.__address == other.__address
+        return self.to_number() == other.to_number()
 
     def __repr__(self) -> str:
         return f"EnOceanAddress({self.to_string()})"
