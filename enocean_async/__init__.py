@@ -15,6 +15,7 @@ from .address import (
 from .eep.db import EEP_DATABASE as ENOCEAN_EEP_DATABASE
 from .eep.handler import EEPHandler
 from .eep.id import EEPID
+from .eep.manufacturer import Manufacturer as EnOceanManufacturers
 from .eep.message import EEPMessage
 from .eep.profile import EEP, EEPDataField
 from .erp1.errors import ERP1ParseError
@@ -55,6 +56,7 @@ __all__ = [
     "EnOceanBaseAddress",
     "EnOceanBroadcastAddress",
     "EnOceanGateway",
+    "EnOceanManufacturers",
     "EnOceanSenderAddress",
     "EnOceanSerialProtocol3",
     "EnOceanUniqueRadioID",
