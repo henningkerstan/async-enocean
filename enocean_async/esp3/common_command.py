@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
 
-from ..erp1.address import BaseAddress
+from ..address import BaseAddress
 from .packet import ESP3Packet, ESP3PacketType
 
 

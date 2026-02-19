@@ -1,5 +1,4 @@
 from ..erp1.telegram import ERP1Telegram
-from .id import EEPID
 from .message import EEPMessage
 from .profile import EEP
 

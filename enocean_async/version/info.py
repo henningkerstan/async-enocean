@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from ..erp1.address import EURID
+from ..address import EURID
 from .id import VersionIdentifier
 
 

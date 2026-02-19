@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
+from ..address import EURID, Address, BaseAddress, BroadcastAddress
 from ..esp3.packet import ESP3Packet, ESP3PacketType
-from .address import EURID, Address, BaseAddress, BroadcastAddress
 from .errors import ERP1ParseError
 from .rorg import RORG
 

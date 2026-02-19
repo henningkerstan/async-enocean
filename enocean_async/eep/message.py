@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Dict
 
+from ..address import EURID, BaseAddress
 from ..eep.id import EEPID
-from ..erp1.address import EURID, BaseAddress
 
 
 @dataclass

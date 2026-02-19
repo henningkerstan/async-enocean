@@ -16,6 +16,7 @@ What works:
 What is missing/untested:
 - create and send Universal Teach-In (UTE) responses
 - handle Teach-in (UTE, 4BS, 1BS)
+- add (and test) more EEPs
 
 
 

@@ -5,9 +5,7 @@ import logging
 import signal
 import sys
 
-from enocean_async.eep.id import EEPID
-from enocean_async.erp1.address import EURID
-from enocean_async.gateway import Gateway
+from enocean_async import EEPID, EnOceanGateway, EnOceanUniqueRadioID
 
 
 class ColorFormatter(logging.Formatter):
@@ -46,7 +44,7 @@ async def main(port: str):
 )
 
     print(f"Setting up EnOcean Gateway for module on {port}...")
-    gateway = Gateway(port)
+    gateway = EnOceanGateway(port)
 
     # callback registration
     gateway.add_esp3_received_callback(lambda pkt: print(f"\nReceived {pkt}"))
@@ -76,8 +74,8 @@ async def main(port: str):
     print(f"Device version: {version_info.device_version}")
 
     # add some devices - adopt to your own devices and EEPs
-    gateway.add_device(EURID.from_string("00:00:00:01"), EEPID.from_string("F6-02-01"))
-    gateway.add_device(EURID.from_string("00:00:00:02"), EEPID.from_string("F6-02-01"))
+    gateway.add_device(EnOceanUniqueRadioID.from_string("00:00:00:01"), EEPID.from_string("F6-02-01"))
+    gateway.add_device(EnOceanUniqueRadioID.from_string("00:00:00:02"), EEPID.from_string("F6-02-01"))
 
     # start learning mode
     gateway.start_learning(timeout_seconds=5)

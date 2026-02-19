@@ -6,11 +6,11 @@ from typing import Callable, Optional
 
 import serial_asyncio_fast as serial_asyncio
 
+from .address import EURID, BaseAddress, SenderAddress
 from .eep.db import EEP_DATABASE
 from .eep.handler import EEPHandler
 from .eep.id import EEPID
 from .eep.message import EEPMessage
-from .erp1.address import EURID, BaseAddress, SenderAddress
 from .erp1.telegram import RORG, ERP1Telegram
 from .erp1.ute import (
     EEPTeachInResponseMessageExpectation,
