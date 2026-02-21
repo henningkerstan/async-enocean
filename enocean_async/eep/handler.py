@@ -1,3 +1,5 @@
+from enocean_async.address import BroadcastAddress
+
 from ..erp1.telegram import ERP1Telegram
 from .message import EEPMessage
 from .profile import EEP
@@ -13,6 +15,11 @@ class EEPHandler:
         """Convert an ERP1Telegram into an EEPMessage."""
 
         msg = EEPMessage(sender=telegram.sender, eepid=self.__eep.id, rssi=0, values={})
+
+        if telegram.destination and not isinstance(
+            telegram.destination, BroadcastAddress
+        ):
+            msg.destination = telegram.destination
 
         # determine the command/telegram type based on the EEP's cmd_size and cmd_offset, if applicable
         cmd_value = 0
