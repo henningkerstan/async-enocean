@@ -521,6 +521,9 @@ class Gateway:
             return
 
         if packet.packet_type != ESP3PacketType.RADIO_ERP1:
+            self._logger.debug(
+                f"Received ESP3 packet of type {packet.packet_type.name}, which is currently not processed by the gateway. Ignoring packet."
+            )
             return
 
         self.__process_erp1_packet(packet)
@@ -529,7 +532,10 @@ class Gateway:
         """Parse ESP3 RADIO_ERP1 packet into ERP1 telegram and process it."""
         try:
             erp1 = ERP1Telegram.from_esp3(packet)
-        except Exception:
+        except Exception as e:
+            self._logger.debug(
+                f"Failed to parse ESP3 packet to ERP1 telegram: {packet}. Ignoring packet. Error: {e}"
+            )
             return
 
         self.__process_erp1_telegram(erp1)

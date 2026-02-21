@@ -77,7 +77,7 @@ with open("SUPPORTED_EEPS.md", "w", encoding="utf-8") as file:
     file.write("|---|---|---|---|\n")
 
     for entry in sorted(EEP_DATABASE.values(), key=lambda item: item.id.to_string()):
-        telegrams_supported = "default (only one message type)"
+        telegrams_supported = "`0x0` (single message EEP)"
         if entry.cmd_offset is not None and entry.cmd_size > 0:
             telegrams_supported = ""
             for key, telegram in sorted(entry.telegrams.items(), key=lambda item: item[0]):

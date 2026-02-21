@@ -14,7 +14,7 @@ class ERP1Telegram:
     status: int = 0x00
 
     sub_tel_num: int | None = 0x03
-    dBm: int | None = 0xFF
+    rssi: int | None = 0xFF
     sec_level: int | None = None
     destination: EURID | BroadcastAddress | None = None
 
@@ -116,7 +116,7 @@ class ERP1Telegram:
             f"telegram_data={self.telegram_data.hex().upper()}, "
             f"status=0x{self.status:02X}, "
             f"sub_tel_num={self.sub_tel_num}, "
-            f"dBm={self.dBm}, "
+            f"rssi={self.rssi}, "
             f"sec_level={self.sec_level})"
         )
 
@@ -228,7 +228,7 @@ class ERP1Telegram:
         elif d is not None and d.is_eurid():
             destination = EURID.from_number(d.to_number())
 
-        dBm = opt[5] if len(opt) > 5 else None
+        rssi = opt[5] if len(opt) > 5 else None
         sec_level = opt[6] if len(opt) > 6 else None
 
         return cls(
@@ -237,7 +237,7 @@ class ERP1Telegram:
             sender=sender,
             status=status,
             sub_tel_num=sub_tel_num,
-            dBm=dBm,
+            rssi=rssi,
             sec_level=sec_level,
             destination=destination,
         )
@@ -258,7 +258,7 @@ class ERP1Telegram:
             if self.destination is not None
             else bytes(BroadcastAddress().to_bytelist())
         )
-        optional += bytes([self.dBm]) if self.dBm is not None else bytes([0xFF])
+        optional += bytes([self.rssi]) if self.rssi is not None else bytes([0xFF])
         optional += (
             bytes([self.sec_level]) if self.sec_level is not None else bytes([0x00])
         )

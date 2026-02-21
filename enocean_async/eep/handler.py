@@ -14,7 +14,12 @@ class EEPHandler:
     def decode(self, telegram: ERP1Telegram) -> EEPMessage:
         """Convert an ERP1Telegram into an EEPMessage."""
 
-        msg = EEPMessage(sender=telegram.sender, eepid=self.__eep.id, rssi=0, values={})
+        msg = EEPMessage(
+            sender=telegram.sender, eepid=self.__eep.id, rssi=telegram.rssi, values={}
+        )
+
+        if msg.eepid != self.__eep.id:
+            return msg  # EEPID mismatch, return message with empty values; TODO: improve this!
 
         if telegram.destination is not None and not telegram.destination.is_broadcast():
             msg.destination = telegram.destination
