@@ -27,11 +27,13 @@ class PushButtonCapability(Capability):
 
     hold_threshold: float = 0.5  # Time to consider press as "hold"
     double_click_window: float = 0.4  # Max time between clicks for double-click
+    release_timeout: float = 30.0  # Max time to wait for a release telegram (as te fallback if no release is received)
 
     _button_press_times: dict[str, float] = field(default_factory=dict)
     _last_click_times: dict[str, float] = field(default_factory=dict)
     _button_held: dict[str, bool] = field(default_factory=dict)
     _hold_tasks: dict[str, asyncio.Task] = field(default_factory=dict)
+    _release_tasks: dict[str, asyncio.Task] = field(default_factory=dict)
 
     async def _emit_hold_event(self, button_id: str, press_time: float) -> None:
         """Emit hold event after threshold is reached."""
@@ -52,6 +54,33 @@ class PushButtonCapability(Capability):
                 )
             )
 
+    async def _emit_release_timeout(self, button_id: str, press_time: float) -> None:
+        """Emit release event if no release telegram arrives within timeout."""
+        await asyncio.sleep(self.release_timeout)
+
+        if button_id not in self._button_press_times:
+            return
+
+        duration = time() - press_time
+
+        if button_id in self._hold_tasks:
+            self._hold_tasks[button_id].cancel()
+            del self._hold_tasks[button_id]
+
+        self._emit(
+            StateChange(
+                device_address=self.device_address,
+                entity_uid=button_id,
+                value=RELEASED,
+                timestamp=time(),
+                time_elapsed=duration,
+                source=StateChangeSource.TIMER,
+            )
+        )
+
+        if button_id in self._release_tasks:
+            del self._release_tasks[button_id]
+
     def _button_pressed(self, button_id: str) -> None:
         """Handle a button press and emit a pushed event."""
         current_time = time()
@@ -59,8 +88,21 @@ class PushButtonCapability(Capability):
         self._button_held[button_id] = False
 
         loop = asyncio.get_running_loop()
+
+        # Start hold timer
         task = loop.create_task(self._emit_hold_event(button_id, current_time))
         self._hold_tasks[button_id] = task
+
+        # Reset release timeout timer
+        if button_id in self._release_tasks:
+            self._release_tasks[button_id].cancel()
+            del self._release_tasks[button_id]
+
+        # Start new release timeout timer
+        timeout_task = loop.create_task(
+            self._emit_release_timeout(button_id, current_time)
+        )
+        self._release_tasks[button_id] = timeout_task
 
         self._emit(
             StateChange(
@@ -92,6 +134,10 @@ class PushButtonCapability(Capability):
         if button_id in self._hold_tasks:
             self._hold_tasks[button_id].cancel()
             del self._hold_tasks[button_id]
+
+        if button_id in self._release_tasks:
+            self._release_tasks[button_id].cancel()
+            del self._release_tasks[button_id]
 
         was_held = self._button_held.get(button_id, False)
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Optional
 
 from ..address import Address
 from ..eep.message import EEPMessage
