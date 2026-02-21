@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
 This script generates a markdown file listing all supported EnOcean Equipment Profiles (EEPs) based on the EEP database in the `enocean_async` library. 
-The generated file is named `SUPPORTED_EEPs.md` and contains a table with the EEP ID and its corresponding name.
+The generated file is named `SUPPORTED_EEPS.md` and contains a table with the EEP ID and its corresponding name.
 """
 from enocean_async.eep.db import EEP_DATABASE
 
-with open("SUPPORTED_EEPs.md", "w", encoding="utf-8") as file:
+with open("SUPPORTED_EEPS.md", "w", encoding="utf-8") as file:
     file.write("# List of supported EnOcean Equipment Profiles (EEPs)\n")
     file.write("<!-- This file is auto-generated via a pre-commit hook, do not edit manually. -->\n\n")
     file.write("| EEP | Name | Telegrams |\n")
