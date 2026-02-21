@@ -28,7 +28,6 @@ requires = ["setuptools >= 77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
-version = { attr = "enocean_async.__version__" }
 readme = { file = [ "README.md" ], content-type = "text/markdown" }
 
 [tool.setuptools.packages.find]
