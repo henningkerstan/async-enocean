@@ -1,6 +1,6 @@
 from enocean_async.eep.manufacturer import Manufacturer
 
-from ..eep.db import EEP_DATABASE
+from ..eep import EEP_DATABASE
 from ..eep.id import EEPID
 from .type import DeviceType
 

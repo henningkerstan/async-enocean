@@ -7,7 +7,7 @@ from typing import Callable, Optional
 import serial_asyncio_fast as serial_asyncio
 
 from .address import EURID, BaseAddress, SenderAddress
-from .eep.db import EEP_DATABASE
+from .eep import EEP_DATABASE
 from .eep.handler import EEPHandler
 from .eep.id import EEPID
 from .eep.message import EEPMessage

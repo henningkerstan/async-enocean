@@ -1,6 +1,5 @@
 [run] 
 omit = 
-    enocean_async/eep/db.py
     enocean_async/eep/message.py
     enocean_async/eep/profily.py
     enocean_async/erp1/errors.py

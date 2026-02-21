@@ -14,7 +14,7 @@ from .address import (
 )
 from .device.device import Device as EnOceanDevice
 from .device.type import DeviceType as EnOceanDeviceType
-from .eep.db import EEP_DATABASE as ENOCEAN_EEP_DATABASE
+from .eep import EEP_DATABASE as ENOCEAN_EEP_DATABASE
 from .eep.handler import EEPHandler
 from .eep.id import EEPID
 from .eep.manufacturer import Manufacturer as EnOceanManufacturers
