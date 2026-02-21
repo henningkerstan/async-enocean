@@ -16,9 +16,7 @@ class EEPHandler:
 
         msg = EEPMessage(sender=telegram.sender, eepid=self.__eep.id, rssi=0, values={})
 
-        if telegram.destination and not isinstance(
-            telegram.destination, BroadcastAddress
-        ):
+        if telegram.destination is not None and not telegram.destination.is_broadcast():
             msg.destination = telegram.destination
 
         # determine the command/telegram type based on the EEP's cmd_size and cmd_offset, if applicable

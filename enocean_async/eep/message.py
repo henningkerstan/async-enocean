@@ -32,7 +32,7 @@ class EEPMessage:
 
     def __repr__(self) -> str:
         msg = f"<EEPMessage {self.eepid} ({self.message_type if self.message_type else 'default'}) from {self.sender.to_string()}"
-        if self.destination and not isinstance(self.destination, BroadcastAddress):
+        if self.destination is not None and not self.destination.is_broadcast():
             msg += f" to {self.destination.to_string()}"
 
         msg += f": {self.values}>"
