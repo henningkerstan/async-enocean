@@ -1,4 +1,5 @@
 from .capability import Capability
+from .humidity_sensor import HumiditySensorCapability
 from .illumination_sensor import IlluminationSensorCapability
 from .metadata import MetaDataCapability
 from .motion_sensor import MotionSensorCapability
@@ -10,6 +11,7 @@ from .voltage_sensor import VoltageSensorCapability
 __all__ = [
     "Capability",
     "F6_02_01_02PushButtonCapability",
+    "HumiditySensorCapability",
     "IlluminationSensorCapability",
     "MetaDataCapability",
     "MotionSensorCapability",

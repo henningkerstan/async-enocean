@@ -1,6 +1,6 @@
 """Device types for A5 (4BS) telegram profiles."""
 
-from .a5_02_xx import (
+from .a5_02 import (
     DEVICE_TYPE_A5_02_0A,
     DEVICE_TYPE_A5_02_0B,
     DEVICE_TYPE_A5_02_01,
@@ -27,6 +27,7 @@ from .a5_02_xx import (
     DEVICE_TYPE_A5_02_20,
     DEVICE_TYPE_A5_02_30,
 )
+from .a5_04 import DEVICE_TYPE_A5_04_01, DEVICE_TYPE_A5_04_02, DEVICE_TYPE_A5_04_03
 from .a5_07_03 import DEVICE_TYPE_A5_07_03
 
 __all__ = [
@@ -55,5 +56,8 @@ __all__ = [
     "DEVICE_TYPE_A5_02_1B",
     "DEVICE_TYPE_A5_02_20",
     "DEVICE_TYPE_A5_02_30",
+    "DEVICE_TYPE_A5_04_01",
+    "DEVICE_TYPE_A5_04_02",
+    "DEVICE_TYPE_A5_04_03",
     "DEVICE_TYPE_A5_07_03",
 ]
