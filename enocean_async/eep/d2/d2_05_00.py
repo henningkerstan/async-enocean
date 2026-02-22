@@ -1,16 +1,16 @@
-"""D2-05-00: Blinds Control for Position and Angle, Type 0x00."""
+"""D2-05-00: Blinds control for position and angle, type 0x00."""
 
 from ..id import EEPID
 from ..profile import EEP, EEPDataField, EEPTelegram
 
 EEP_D2_05_00 = EEP(
     id=EEPID.from_string("D2-05-00"),
-    name="Blinds Control for Position and Angle, Type 0x00",
+    name="Blinds control for position and angle, type 0x00",
     cmd_size=4,
     cmd_offset=-4,
     telegrams={
         1: EEPTelegram(
-            name="Go to Position and Angle",
+            name="Go to position and angle",
             datafields=[
                 EEPDataField(
                     id="POS",
@@ -108,7 +108,7 @@ EEP_D2_05_00 = EEP(
             ],
         ),
         3: EEPTelegram(
-            name="Query Position and Angle",
+            name="Query position and angle",
             datafields=[
                 EEPDataField(
                     id="CHN",
@@ -129,7 +129,7 @@ EEP_D2_05_00 = EEP(
             ],
         ),
         4: EEPTelegram(
-            name="Reply Position and Angle",
+            name="Reply position and angle",
             datafields=[
                 EEPDataField(
                     id="POS",

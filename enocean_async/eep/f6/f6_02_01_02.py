@@ -4,8 +4,8 @@ This module contains F6-02-01 and F6-02-02 profiles, which share identical
 telegram structures and only differ in their application-level interpretation.
 
 Profiles in this module:
-- F6-02-01: Light and Blind Control - Application Style 1
-- F6-02-02: Light and Blind Control - Application Style 2
+- F6-02-01: Light and blind control - application style 1
+- F6-02-02: Light and blind control - application style 2
 """
 
 from ..id import EEPID
@@ -68,7 +68,7 @@ _F6_02_TELEGRAM = EEPTelegram(
 # Define all F6-02-xx variants using the shared telegram structure
 EEP_F6_02_01 = EEP(
     id=EEPID.from_string("F6-02-01"),
-    name="Light and Blind Control - Application Style 1",
+    name="Light and blind control - application style 1",
     cmd_size=0,
     cmd_offset=None,
     telegrams={0: _F6_02_TELEGRAM},
@@ -76,7 +76,7 @@ EEP_F6_02_01 = EEP(
 
 EEP_F6_02_02 = EEP(
     id=EEPID.from_string("F6-02-02"),
-    name="Light and Blind Control - Application Style 2",
+    name="Light and blind control - application style 2",
     cmd_size=0,
     cmd_offset=None,
     telegrams={0: _F6_02_TELEGRAM},

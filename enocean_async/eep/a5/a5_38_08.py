@@ -1,11 +1,11 @@
-"""A5-38-08: Central Command - Gateway."""
+"""A5-38-08: Central command - gateway."""
 
 from ..id import EEPID
 from ..profile import EEP, EEPDataField, EEPTelegram
 
 EEP_A5_38_08 = EEP(
     id=EEPID.from_string("A5-38-08"),
-    name="Central Command - Gateway",
+    name="Central command - gateway",
     cmd_size=8,
     cmd_offset=0,
     telegrams={

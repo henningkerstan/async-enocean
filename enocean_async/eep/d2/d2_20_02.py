@@ -1,16 +1,16 @@
-"""D2-20-02: Fan Control, Type 0x02."""
+"""D2-20-02: Fan control, type 0x02."""
 
 from ..id import EEPID
 from ..profile import EEP, EEPDataField, EEPTelegram
 
 EEP_D2_20_02 = EEP(
     id=EEPID.from_string("D2-20-02"),
-    name="Fan Control, Type 0x02",
+    name="Fan control, type 0x02",
     cmd_size=7,
     cmd_offset=1,
     telegrams={
         0: EEPTelegram(
-            name="Fan Control Message",
+            name="Fan control message",
             datafields=[
                 EEPDataField(
                     id="RSR",
@@ -73,7 +73,7 @@ EEP_D2_20_02 = EEP(
             ],
         ),
         1: EEPTelegram(
-            name="Fan Status Message",
+            name="Fan status message",
             datafields=[
                 EEPDataField(
                     id="HCS",

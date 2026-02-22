@@ -1,11 +1,11 @@
-"""A5-07-03: Occupancy with Supply voltage monitor and 10-bit illumination measurement."""
+"""A5-07-03: Occupancy with supply voltage monitor and 10-bit illumination measurement."""
 
 from ..id import EEPID
 from ..profile import EEP, EEPDataField, EEPTelegram
 
 EEP_A5_07_03 = EEP(
     id=EEPID.from_string("A5-07-03"),
-    name="Occupancy with Supply voltage monitor and 10-bit illumination measurement",
+    name="Occupancy with supply voltage monitor and 10-bit illumination measurement",
     cmd_size=0,
     cmd_offset=None,
     telegrams={
@@ -38,7 +38,7 @@ EEP_A5_07_03 = EEP(
                 ),
                 EEPDataField(
                     id="PIR",
-                    name="PIR Status",
+                    name="PIR status",
                     offset=24,
                     size=1,
                     range_min=0,
