@@ -19,6 +19,7 @@ EEP_D2_05_00 = EEP(
                     size=7,
                     range_min=0,
                     range_max=127,
+                    unit_fn=lambda _: "%",
                 ),
                 EEPDataField(
                     id="ANG",
@@ -27,6 +28,7 @@ EEP_D2_05_00 = EEP(
                     size=7,
                     range_min=0,
                     range_max=127,
+                    unit_fn=lambda _: "%",
                 ),
                 EEPDataField(
                     id="REPO",
@@ -119,12 +121,14 @@ EEP_D2_05_00 = EEP(
                     name="Vertical position",
                     offset=1,
                     size=7,
+                    unit_fn=lambda _: "%",
                 ),
                 EEPDataField(
                     id="ANG",
                     name="Rotation angle",
                     offset=9,
                     size=7,
+                    unit_fn=lambda _: "%",
                 ),
                 EEPDataField(
                     id="LOCK",

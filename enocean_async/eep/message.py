@@ -6,6 +6,17 @@ from ..eep.id import EEPID
 
 
 @dataclass
+class EEPMessageType:
+    """Representation of an EEP message type."""
+
+    id: int
+    """A unique identifier for the message type."""
+
+    description: str
+    """A human-readable description of the message type."""
+
+
+@dataclass
 class EEPMessageValue:
     """Raw and interpreted value for a single EEP data field."""
 
@@ -38,7 +49,7 @@ class EEPMessage:
     rssi: int | None = None
     """The RSSI (signal strength) of the message. This is optional and can be None if the RSSI is unknown or not relevant."""
 
-    message_type: str | None = None
+    message_type: EEPMessageType | None = None
     """The type of the message."""
 
     values: Dict[str, EEPMessageValue] = field(default_factory=dict)

@@ -40,6 +40,7 @@ CAPABILITY_STATE_CHANGES = {
         "entities": {
             "POS": ["position (0-127)"],
             "ANG": ["angle (0-127)"],
+            "COVER_STATE": ["open", "opening", "closed", "closing", "stopped"],
         },
     },
     TemperatureSensorCapability: {
@@ -103,10 +104,19 @@ def get_state_changes_for_device_type(eepid):
 with open("SUPPORTED_EEPS.md", "w", encoding="utf-8") as file:
     file.write("# List of supported EnOcean Equipment Profiles (EEPs)\n")
     file.write("<!-- This file is auto-generated via a pre-commit hook, do not edit manually. -->\n\n")
-    file.write("| EEP | Name | Telegrams | StateChange Entity UIDs |\n")
-    file.write("|---|---|---|---|\n")
+    file.write("| RORG | FUNC | TYPE | Name | Telegrams | StateChange Events |\n")
+    file.write("|---|---|---|---|---|---|\n")
 
-    for entry in sorted(EEP_DATABASE.values(), key=lambda item: item.id.to_string()):
+    sorted_eeps = sorted(EEP_DATABASE.values(), key=lambda item: item.id.to_string())
+    
+
+    
+    for entry in sorted_eeps:
+        # Extract RORG, FUNC, TYPE from EEPID
+        rorg = f"{entry.id.rorg:02X}"
+        func = f"{entry.id.func:02X}"
+        type_ = f"{entry.id.type:02X}"
+                
         telegrams_supported = "`0x0` (single message EEP)"
         if entry.cmd_offset is not None and entry.cmd_size > 0:
             telegrams_supported = ""
@@ -123,6 +133,9 @@ with open("SUPPORTED_EEPS.md", "w", encoding="utf-8") as file:
             entity_uids_str = "—"
         
         file.write(
-            f"| {entry.id.to_string()} | {entry.name} | {telegrams_supported} | {entity_uids_str} |\n"
+            f"| {rorg} | {func} | {type_} | {entry.name} | {telegrams_supported} | {entity_uids_str} |\n"
         )
+        
+        prev_rorg = rorg
+        prev_func = func
         

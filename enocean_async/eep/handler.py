@@ -1,7 +1,7 @@
 from enocean_async.address import BroadcastAddress
 
 from ..erp1.telegram import ERP1Telegram
-from .message import EEPMessage, EEPMessageValue
+from .message import EEPMessage, EEPMessageType, EEPMessageValue
 from .profile import EEP
 
 
@@ -41,11 +41,12 @@ class EEPHandler:
         if cmd_value not in self.__eep.telegrams:
             return msg  # unknown telegram type, return message with empty values; TODO: improve this!
 
-        if self.__eep.telegrams[cmd_value].name:
-            # print(f"Telegram {cmd_value} identified as {self.__eep.telegrams[cmd_value].name}")
-            msg.message_type = self.__eep.telegrams[cmd_value].name
-        else:
-            msg.message_type = f"Telegram {cmd_value}"
+        msg.message_type = EEPMessageType(
+            id=cmd_value,
+            description=self.__eep.telegrams[cmd_value].name
+            if self.__eep.telegrams[cmd_value].name
+            else f"Telegram {cmd_value}",
+        )
 
         # iterate over the data fields defined in the EEP and extract values from the telegram
         # First pass: collect all raw values for dependency resolution
