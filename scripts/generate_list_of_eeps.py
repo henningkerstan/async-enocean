@@ -3,6 +3,7 @@
 This script generates a markdown file listing all supported EnOcean Equipment Profiles (EEPs) based on the EEP database in the `enocean_async` library. 
 The generated file is named `SUPPORTED_EEPS.md` and contains a table with the EEP ID and its corresponding name.
 """
+from enocean_async.capabilities.illumination_sensor import IlluminationSensorCapability
 from enocean_async.capabilities.metadata import MetaDataCapability
 from enocean_async.capabilities.motion_sensor import MotionSensorCapability
 from enocean_async.capabilities.position_angle import PositionAngleCapability
@@ -11,6 +12,7 @@ from enocean_async.capabilities.push_button import (
     PushButtonCapability,
 )
 from enocean_async.capabilities.temperature_sensor import TemperatureSensorCapability
+from enocean_async.capabilities.voltage_sensor import VoltageSensorCapability
 from enocean_async.device.types import DEVICE_TYPE_DATABASE
 from enocean_async.eep import EEP_DATABASE
 
@@ -47,6 +49,16 @@ CAPABILITY_STATE_CHANGES = {
     MotionSensorCapability: {
         "entities": {
             "motion": ["motion detected, no motion, or uncertain"],
+        },
+    },
+    IlluminationSensorCapability: {
+        "entities": {
+            "illumination": ["illumination (lx)"],
+        },
+    },
+    VoltageSensorCapability: {
+        "entities": {
+            "voltage": ["supply voltage (V)"],
         },
     },
     MetaDataCapability: {
