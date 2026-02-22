@@ -28,7 +28,7 @@
 | A5-02-1B | Temperature sensor, range 50.0°C to 130.0°C | `0x0` (single message EEP) | `temperature`: `temperature (°C)`<br>`rssi`: `signal strength (dBm)`<br>`last_seen`: `timestamp`<br>`telegram_count`: `count` |
 | A5-02-20 | 10 bit temperature sensor, range -10.0°C to 41.2°C | `0x0` (single message EEP) | `temperature`: `temperature (°C)`<br>`rssi`: `signal strength (dBm)`<br>`last_seen`: `timestamp`<br>`telegram_count`: `count` |
 | A5-02-30 | 10 bit temperature sensor, range -40.0°C to 62.3°C | `0x0` (single message EEP) | `temperature`: `temperature (°C)`<br>`rssi`: `signal strength (dBm)`<br>`last_seen`: `timestamp`<br>`telegram_count`: `count` |
-| A5-07-03 | Occupancy with supply voltage monitor and 10-bit illumination measurement | `0x0` (single message EEP) | — |
+| A5-07-03 | Occupancy with supply voltage monitor and 10-bit illumination measurement | `0x0` (single message EEP) | `motion`: `motion detected, no motion, or uncertain`<br>`rssi`: `signal strength (dBm)`<br>`last_seen`: `timestamp`<br>`telegram_count`: `count` |
 | A5-38-08 | Central command - gateway | `0x2`: Dimming<br> | — |
 | D2-05-00 | Blinds control for position and angle, type 0x00 | `0x1`: Go to position and angle<br>`0x2`: Stop<br>`0x3`: Query position and angle<br>`0x4`: Reply position and angle<br> | `POS`: `position (0-127)`<br>`ANG`: `angle (0-127)`<br>`rssi`: `signal strength (dBm)`<br>`last_seen`: `timestamp`<br>`telegram_count`: `count` |
 | D2-20-02 | Fan control, type 0x02 | `0x0`: Fan control message<br>`0x1`: Fan status message<br> | — |

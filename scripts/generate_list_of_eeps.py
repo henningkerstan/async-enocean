@@ -4,6 +4,7 @@ This script generates a markdown file listing all supported EnOcean Equipment Pr
 The generated file is named `SUPPORTED_EEPS.md` and contains a table with the EEP ID and its corresponding name.
 """
 from enocean_async.capabilities.metadata import MetaDataCapability
+from enocean_async.capabilities.motion_sensor import MotionSensorCapability
 from enocean_async.capabilities.position_angle import PositionAngleCapability
 from enocean_async.capabilities.push_button import (
     F6_02_01_02PushButtonCapability,
@@ -41,6 +42,11 @@ CAPABILITY_STATE_CHANGES = {
     TemperatureSensorCapability: {
         "entities": {
             "temperature": ["temperature (°C)"],
+        },
+    },
+    MotionSensorCapability: {
+        "entities": {
+            "motion": ["motion detected, no motion, or uncertain"],
         },
     },
     MetaDataCapability: {

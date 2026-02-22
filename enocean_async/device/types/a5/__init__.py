@@ -27,6 +27,7 @@ from .a5_02_xx import (
     DEVICE_TYPE_A5_02_20,
     DEVICE_TYPE_A5_02_30,
 )
+from .a5_07_03 import DEVICE_TYPE_A5_07_03
 
 __all__ = [
     "DEVICE_TYPE_A5_02_01",
@@ -54,4 +55,5 @@ __all__ = [
     "DEVICE_TYPE_A5_02_1B",
     "DEVICE_TYPE_A5_02_20",
     "DEVICE_TYPE_A5_02_30",
+    "DEVICE_TYPE_A5_07_03",
 ]
