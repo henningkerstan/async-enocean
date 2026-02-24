@@ -1,6 +1,6 @@
 [project]
 name = "enocean_async"
-version = "0.1.1"
+version = "0.2.0"
 authors = [
   { name="Henning Kerstan", email="mail@henningkerstan.de" },
 ]
@@ -58,7 +58,7 @@ split-on-trailing-comma = false
 case-sensitive = true
 
 [tool.bumpversion]
-current_version = "0.1.1"
+current_version = "0.2.0"
 parse = "(?P<major>\\d+)\\.(?P<minor>\\d+)\\.(?P<patch>\\d+)"
 serialize = ["{major}.{minor}.{patch}"]
 search = "{current_version}"
