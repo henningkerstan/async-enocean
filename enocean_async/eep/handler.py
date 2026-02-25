@@ -1,5 +1,3 @@
-import math
-
 from enocean_async.address import BroadcastAddress
 
 from ..erp1.telegram import RORG, ERP1Telegram
@@ -132,18 +130,9 @@ class EEPHandler:
                 f"Unknown telegram type {cmd_value} for EEP {self.__eep.eep}"
             )
 
-        datafields = self.__eep.telegrams[cmd_value].datafields
-
-        # Compute the minimum buffer size to hold all fields and the CMD selector.
-        max_bit = max((f.offset + f.size for f in datafields), default=0)
-        if self.__eep.cmd_size > 0 and self.__eep.cmd_offset is not None:
-            if self.__eep.cmd_offset < 0:
-                # CMD is at the end (negative offset = relative to buffer end)
-                max_bit += self.__eep.cmd_size
-            else:
-                # CMD is embedded at a fixed position
-                max_bit = max(max_bit, self.__eep.cmd_offset + self.__eep.cmd_size)
-        buffer_size = math.ceil(max_bit / 8)
+        telegram_def = self.__eep.telegrams[cmd_value]
+        datafields = telegram_def.datafields
+        buffer_size = telegram_def.byte_size
 
         rorg = RORG(self.__eep.eep.rorg)
         erp1 = ERP1Telegram(

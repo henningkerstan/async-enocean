@@ -1,5 +1,5 @@
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import logging
 import time
 from typing import Callable, Optional
@@ -288,7 +288,7 @@ class Gateway:
         self,
         destination: EURID | BaseAddress,
         action: str,
-        values: dict[str, int],
+        values: dict[str, int] = field(default_factory=dict),
         sender: SenderAddress | None = None,
     ) -> SendResult:
         """Send a command to a registered device.

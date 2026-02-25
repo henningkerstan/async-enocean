@@ -12,6 +12,7 @@ class ActionUID:
     # Cover / blind control (D2-05-00)
     SET_COVER_POSITION = "set_cover_position"
     STOP_COVER = "stop_cover"
+    QUERY_COVER_POSITION = "query_cover_position"
 
     # Central command / dimming (A5-38-08)
     DIM = "dim"

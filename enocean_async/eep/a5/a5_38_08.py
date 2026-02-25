@@ -27,6 +27,13 @@ EEP_A5_38_08 = EEPSpecification(
             name="Dimming",
             datafields=[
                 EEPDataField(
+                    id="CMD",
+                    name="Command",
+                    offset=0,
+                    size=8,
+                    range_enum={2: "Dimming"},
+                ),
+                EEPDataField(
                     id="EDIM",
                     name="Dimming value",
                     offset=8,

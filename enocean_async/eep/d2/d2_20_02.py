@@ -27,6 +27,13 @@ EEP_D2_20_02 = EEPSpecification(
             name="Fan control message",
             datafields=[
                 EEPDataField(
+                    id="CMD",
+                    name="Command",
+                    offset=1,
+                    size=7,
+                    range_enum={0: "Fan control message"},
+                ),
+                EEPDataField(
                     id="RSR",
                     name="Room size reference",
                     offset=10,
@@ -80,6 +87,13 @@ EEP_D2_20_02 = EEPSpecification(
         1: EEPTelegram(
             name="Fan status message",
             datafields=[
+                EEPDataField(
+                    id="CMD",
+                    name="Command",
+                    offset=1,
+                    size=7,
+                    range_enum={1: "Fan status message"},
+                ),
                 EEPDataField(
                     id="HCS",
                     name="Humidity control status",

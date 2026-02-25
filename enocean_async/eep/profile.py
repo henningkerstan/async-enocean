@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Any, Callable, Optional
+import math
+from typing import Any, Callable
 
 from .id import EEP
 
@@ -76,7 +77,13 @@ class EEPTelegram:
     """Human-readable name for the telegram, describing its purpose or function."""
 
     datafields: list[EEPDataField] = field(default_factory=list)
-    """List of data fields within the telegram."""
+    """List of data fields within the telegram, including the CMD selector field if applicable."""
+
+    @property
+    def byte_size(self) -> int:
+        """Minimum number of bytes required to hold all data fields (including the CMD field if present)."""
+        max_bit = max((f.offset + f.size for f in self.datafields), default=0)
+        return math.ceil(max_bit / 8)
 
 
 @dataclass
