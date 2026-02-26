@@ -1,5 +1,5 @@
 import asyncio
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 import logging
 import time
 from typing import Callable, Optional
@@ -7,7 +7,7 @@ from typing import Callable, Optional
 import serial_asyncio_fast as serial_asyncio
 
 from .address import EURID, BaseAddress, SenderAddress
-from .capabilities.device_command import DeviceCommand
+from .capabilities.action import Action
 from .capabilities.metadata import MetaDataCapability
 from .capabilities.state_change import StateChange, StateChangeCallback
 from .device.device import Device
@@ -287,16 +287,15 @@ class Gateway:
     async def send_command(
         self,
         destination: EURID | BaseAddress,
-        action: str,
-        values: dict[str, int] = field(default_factory=dict),
+        action: Action,
         sender: SenderAddress | None = None,
     ) -> SendResult:
-        """Send a command to a registered device.
+        """Send a typed action command to a registered device.
 
         Args:
-            destination: The device's address (must have been registered via add_device()). Note that the destination is needed to infer the correct EEP, it will not necessarily be used as destination for sending.
-            action: The action UID (ActionUID constant) identifying the command to send.
-            values: Raw field values as {EEP field_id → raw integer}.
+            destination: The device's address (must have been registered via add_device()).
+                         Used to look up the correct EEP; not necessarily the RF destination.
+            action: A typed Action instance (e.g. SetCoverPositionAction, DimAction).
             sender: Sender address to use. If None, uses the device's registered sender
                     or falls back to the gateway's base ID.
 
@@ -316,8 +315,10 @@ class Gateway:
             raise ValueError(f"No EEP handler loaded for {eep_id}")
 
         spec = EEP_SPECIFICATIONS[eep_id]
-        if action not in spec.command_encoders:
-            raise ValueError(f"Action '{action}' is not supported for EEP {eep_id}")
+        if action.action_uid not in spec.command_encoders:
+            raise ValueError(
+                f"Action '{action.action_uid}' is not supported for EEP {eep_id}"
+            )
 
         # Resolve sender: explicit > device sender > gateway base ID
         if sender is None:
@@ -331,8 +332,7 @@ class Gateway:
                 "Could not determine sender address; pass sender= explicitly or connect first"
             )
 
-        cmd = DeviceCommand(action=action, values=values)
-        message: EEPMessage = spec.command_encoders[action](cmd)
+        message: EEPMessage = spec.command_encoders[action.action_uid](action)
         message.sender = sender
         message.destination = destination
 

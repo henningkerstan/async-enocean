@@ -1,7 +1,11 @@
 """D2-05-00: Blinds control for position and angle, type 0x00."""
 
 from ...capabilities.action_uid import ActionUID
-from ...capabilities.device_command import DeviceCommand
+from ...capabilities.cover_actions import (
+    QueryCoverPositionAction,
+    SetCoverPositionAction,
+    StopCoverAction,
+)
 from ...capabilities.observable_uids import ObservableUID
 from ...capabilities.position_angle import CoverCapability
 from ..id import EEP
@@ -29,33 +33,36 @@ _CMD_AT_OFFSET4 = EEPDataField(
 )
 
 
-def _encode_set_position(cmd: DeviceCommand) -> EEPMessage:
+def _encode_set_position(action: SetCoverPositionAction) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=1, description="Go to position and angle"),
     )
-    for field_id, raw in cmd.values.items():
-        msg.values[field_id] = EEPMessageValue(raw=raw, value=raw)
+    msg.values["POS"] = EEPMessageValue(raw=action.position, value=action.position)
+    msg.values["ANG"] = EEPMessageValue(raw=action.angle, value=action.angle)
+    msg.values["REPO"] = EEPMessageValue(
+        raw=action.repositioning_mode, value=action.repositioning_mode
+    )
+    msg.values["LOCK"] = EEPMessageValue(raw=action.lock_mode, value=action.lock_mode)
+    msg.values["CHN"] = EEPMessageValue(raw=action.channel, value=action.channel)
     return msg
 
 
-def _encode_stop(cmd: DeviceCommand) -> EEPMessage:
+def _encode_stop(action: StopCoverAction) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=2, description="Stop"),
     )
-    for field_id, raw in cmd.values.items():
-        msg.values[field_id] = EEPMessageValue(raw=raw, value=raw)
+    msg.values["CHN"] = EEPMessageValue(raw=action.channel, value=action.channel)
     return msg
 
 
-def _encode_query_position(cmd: DeviceCommand) -> EEPMessage:
+def _encode_query_position(action: QueryCoverPositionAction) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=3, description="Query position and angle"),
     )
-    for field_id, raw in cmd.values.items():
-        msg.values[field_id] = EEPMessageValue(raw=raw, value=raw)
+    msg.values["CHN"] = EEPMessageValue(raw=action.channel, value=action.channel)
     return msg
 
 

@@ -1,19 +1,26 @@
 """A5-38-08: Central command - gateway."""
 
 from ...capabilities.action_uid import ActionUID
-from ...capabilities.device_command import DeviceCommand
+from ...capabilities.dimmer_actions import DimAction
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
 from ..profile import EEPDataField, EEPSpecification, EEPTelegram
 
 
-def _encode_dim(cmd: DeviceCommand) -> EEPMessage:
+def _encode_dim(action: DimAction) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=2, description="Dimming"),
     )
-    for field_id, raw in cmd.values.items():
-        msg.values[field_id] = EEPMessageValue(raw=raw, value=raw)
+    msg.values["EDIM"] = EEPMessageValue(raw=action.dim_value, value=action.dim_value)
+    msg.values["RMP"] = EEPMessageValue(raw=action.ramp_time, value=action.ramp_time)
+    msg.values["EDIMR"] = EEPMessageValue(
+        raw=int(action.relative), value=int(action.relative)
+    )
+    msg.values["STR"] = EEPMessageValue(raw=int(action.store), value=int(action.store))
+    msg.values["SW"] = EEPMessageValue(
+        raw=int(action.switch_on), value=int(action.switch_on)
+    )
     return msg
 
 

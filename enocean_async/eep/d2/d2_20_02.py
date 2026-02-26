@@ -1,19 +1,22 @@
 """D2-20-02: Fan control, type 0x02."""
 
 from ...capabilities.action_uid import ActionUID
-from ...capabilities.device_command import DeviceCommand
+from ...capabilities.fan_actions import SetFanSpeedAction
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
 from ..profile import EEPDataField, EEPSpecification, EEPTelegram
 
 
-def _encode_set_fan_speed(cmd: DeviceCommand) -> EEPMessage:
+def _encode_set_fan_speed(action: SetFanSpeedAction) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=0, description="Fan control message"),
     )
-    for field_id, raw in cmd.values.items():
-        msg.values[field_id] = EEPMessageValue(raw=raw, value=raw)
+    msg.values["FS"] = EEPMessageValue(raw=action.fan_speed, value=action.fan_speed)
+    msg.values["RSR"] = EEPMessageValue(
+        raw=action.room_size_reference, value=action.room_size_reference
+    )
+    msg.values["RS"] = EEPMessageValue(raw=action.room_size, value=action.room_size)
     return msg
 
 
