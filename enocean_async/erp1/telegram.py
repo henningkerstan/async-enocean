@@ -251,6 +251,7 @@ class ERP1Telegram:
         destination_bytes = opt[1:5] if len(opt) > 4 else None
         d = Address.from_bytelist(destination_bytes) if destination_bytes else None
 
+        destination = None
         if d is not None and d.is_broadcast():
             destination = BroadcastAddress()
         elif d is not None and d.is_eurid():
