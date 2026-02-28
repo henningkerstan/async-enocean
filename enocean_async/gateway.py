@@ -118,6 +118,7 @@ class Gateway:
         # learning
         self.__is_learning: bool = False
         self.__learning_timeout_task: asyncio.Task | None = None
+        self.__sender_id_for_learning: SenderAddress | None = None
         self.__allow_teach_out: bool = False
 
         # logging
@@ -230,12 +231,54 @@ class Gateway:
                 f"Serial connection to EnOcean module on {self.__port} closed"
             )
 
-    def start_learning(
-        self, timeout_seconds: int = 60, allow_teach_out: bool = False
+    @property
+    async def valid_senders(self) -> list[SenderAddress]:
+        """Return the list of valid sender addresses for this gateway, which includes the gateway's EURID and the range of Base IDs derived from the gateway's base ID."""
+        base_id = await self.base_id
+        senders = [await self.eurid, base_id]
+
+        base_id_number = base_id.to_number()
+        for i in range(1, 128):
+            senders.append(BaseAddress(base_id_number + i))
+
+        return senders
+
+    async def is_valid_sender(self, sender: SenderAddress) -> bool:
+        """Check if the sender address is a valid sender for this gateway (i.e. is either the gateway's EURID, or a BaseAddress in the range of the gateway's base ID)."""
+        valid_senders = await self.valid_senders
+        return sender in valid_senders
+
+    async def start_learning(
+        self,
+        timeout_seconds: int = 60,
+        sender_id: SenderAddress | None = None,
+        allow_teach_out: bool = False,
     ) -> None:
-        """Start learning mode."""
+        """Start learning mode for pairing new EnOcean devices.
+
+        This method enables the gateway to learn new device configurations. When learning mode
+        is active, the gateway will accept teach-in telegrams from EnOcean devices. The learning
+        session will automatically terminate after the specified timeout period.
+
+        Args:
+            timeout_seconds (int, optional): Duration in seconds before learning mode automatically
+                stops. Defaults to 60 seconds.
+            sender_id (SenderAddress | None, optional): The sender ID to use for learning mode.
+                If not provided, the gateway's base ID will be used.
+            allow_teach_out (bool, optional): If True, allows devices to be removed (teach-out)
+                during learning mode. Defaults to False.
+        """
         self.__is_learning = True
         self.__allow_teach_out = allow_teach_out
+
+        if sender_id is not None and not await self.is_valid_sender(sender_id):
+            raise ValueError(
+                f"Invalid sender_id {sender_id} for learning mode. Must be a valid sender address for this gateway."
+            )
+
+        self.__sender_id_for_learning = (
+            sender_id if sender_id is not None else await self.base_id
+        )
 
         self._logger.info(
             f"Learning mode started. Will automatically stop after {timeout_seconds} seconds."
@@ -827,6 +870,29 @@ class Gateway:
                     f"Failed to decode EEP message {eep_message} using capability {capability}: {e}",
                 )
 
+    async def __send_ute_response(self, response: UTEMessage) -> None:
+        try:
+            self._logger.info(f"Sending UTE teach-in response message: {response}")
+            erp1 = response.to_erp1()
+            esp3 = erp1.to_esp3()
+            send_result = await self.send_esp3_packet(esp3)
+
+        except Exception as e:
+            self._logger.error(f"Failed to send UTE teach-in response message: {e}")
+            return
+
+        if (
+            send_result.response is None
+            or send_result.response.return_code != ResponseCode.OK
+        ):
+            self._logger.error(
+                f"Failed to send UTE teach-in response message. Send result: {send_result}"
+            )
+
+        self._logger.info(
+            f"Successfully completed bidirectional UTE teach-in for device {response.sender} with EEP {response.eep}."
+        )
+
     def __handle_ute_message(self, ute_message: UTEMessage):
         self.__emit(self.__ute_receive_callbacks, ute_message)
 
@@ -845,17 +911,28 @@ class Gateway:
         )
 
         match request_type:
-            case UTEQueryRequestType.TEACH_IN:
-                self._logger.info(f"Received UTE teach-in query message: {ute_message}")
+            case (
+                UTEQueryRequestType.TEACH_IN,
+                UTEQueryRequestType.TEACH_IN_OR_DELETION_OF_TEACH_IN,
+            ):
+                self._logger.info(
+                    f"Received UTE teach-in / teach-in or deletion of teach-in message: {ute_message}"
+                )
+                if response_expected and self.__is_learning:
+                    self._logger.info(
+                        "Preparing to send UTE teach-in response message."
+                    )
+                    # TODO: check if EEP is supported and send appropriate response; for now, we just send a generic "accepted" response without checking the EEP or other details of the message, which is not ideal but should be sufficient for testing purposes
+                    response = UTEMessage.response_for_query(
+                        ute_message,
+                        UTEResponseType.ACCEPTED_TEACH_IN,
+                        sender=self.__sender_id_for_learning,
+                    )
+                    asyncio.create_task(self.__send_ute_response(response))
 
             case UTEQueryRequestType.TEACH_IN_DELETION:
                 self._logger.info(
                     f"Received UTE teach-in deletion query message: {ute_message}"
-                )
-
-            case UTEQueryRequestType.TEACH_IN_OR_DELETION_OF_TEACH_IN:
-                self._logger.info(
-                    f"Received UTE teach-in or deletion of teach-in query message: {ute_message}"
                 )
 
     def __handle_1bs_teach_in_telegram(self, erp1: ERP1Telegram):

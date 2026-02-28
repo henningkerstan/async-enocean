@@ -2,11 +2,9 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Optional
 
-from enocean_async.eep.manufacturer import Manufacturer
-from enocean_async.erp1.errors import ERP1ParseError
-from enocean_async.esp3.packet import ESP3Packet, ESP3PacketType
-
+from ..address import EURID, SenderAddress
 from ..eep.id import EEP
+from ..eep.manufacturer import Manufacturer
 from ..erp1.rorg import RORG
 from ..erp1.telegram import ERP1Telegram
 
@@ -52,6 +50,12 @@ class UTEMessage:
     manufacturer: Manufacturer
     eep: EEP
 
+    sender: Optional[EURID] = None
+    """Not part of the UTE message itself. Will be filled in if created using the from_erp1 class method."""
+
+    destination: Optional[EURID] = None
+    """Not part of the UTE message itself. Is autofilled when creating a response message using the response_for_query class method."""
+
     @classmethod
     def from_erp1(cls, telegram: ERP1Telegram) -> "UTEMessage":
         if telegram.rorg != RORG.RORG_UTE:
@@ -90,7 +94,7 @@ class UTEMessage:
         try:
             manufacturer = Manufacturer(manufacturer_id)
         except ValueError:
-            manufacturer = Manufacturer.Reserved
+            manufacturer = Manufacturer.RESERVED
 
         eep = EEP(
             type_=telegram.data_byte(2),
@@ -106,11 +110,13 @@ class UTEMessage:
             number_of_channels_to_be_taught_in=number_of_channels_to_be_taught_in,
             manufacturer=manufacturer,
             eep=eep,
+            sender=telegram.sender,
+            destination=telegram.destination,
         )
 
     @classmethod
     def response_for_query(
-        cls, query: UTEMessage, response_type: UTEResponseType
+        cls, query: UTEMessage, response_type: UTEResponseType, sender: SenderAddress
     ) -> UTEMessage:
         if query.command != CommandIdentifier.TEACH_IN_QUERY:
             raise ValueError("Could not create response for non-query.")
@@ -123,4 +129,25 @@ class UTEMessage:
             number_of_channels_to_be_taught_in=query.number_of_channels_to_be_taught_in,
             manufacturer=query.manufacturer,
             eep=query.eep,
+            sender=sender,
+            destination=query.sender,  # send response back to sender of query
         )
+
+    def to_erp1(self) -> ERP1Telegram:
+        data = bytearray(6)
+
+        telegram = ERP1Telegram(
+            rorg=RORG.RORG_UTE,
+            telegram_data=bytes(data),
+            sender=self.sender,
+            destination=self.destination,
+        )
+
+        telegram.set_bitstring_raw_value(
+            0, 1, self.communication_during_eep_operation.value
+        )
+
+        if self.command != CommandIdentifier.TEACH_IN_RESPONSE:
+            raise ValueError(
+                "Only teach-in response messages can be converted to ERP1 for sending."
+            )
