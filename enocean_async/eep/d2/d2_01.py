@@ -692,16 +692,22 @@ _sc = ScalarCapability  # local alias to keep factory lines short
 
 
 def _factories(dimming: bool) -> list:
+    # CMD 0x4 and 0x7 both carry an I/O channel field; 0x1E means "not applicable"
+    # (single-channel device or all-channels query) — map that sentinel to channel=None.
     base = [
         lambda addr, cb: _sc(
             device_address=addr,
             on_state_change=cb,
             observable_uid=ObservableUID.SWITCH_STATE,
+            channel_field_id="I/O",
+            channel_not_applicable=0x1E,
         ),
         lambda addr, cb: _sc(
             device_address=addr,
             on_state_change=cb,
             observable_uid=ObservableUID.ERROR_LEVEL,
+            channel_field_id="I/O",
+            channel_not_applicable=0x1E,
         ),
         lambda addr, cb: _sc(
             device_address=addr,
@@ -709,10 +715,18 @@ def _factories(dimming: bool) -> list:
             observable_uid=ObservableUID.PILOT_WIRE_MODE,
         ),
         lambda addr, cb: _sc(
-            device_address=addr, on_state_change=cb, observable_uid=ObservableUID.ENERGY
+            device_address=addr,
+            on_state_change=cb,
+            observable_uid=ObservableUID.ENERGY,
+            channel_field_id="I/O",
+            channel_not_applicable=0x1E,
         ),
         lambda addr, cb: _sc(
-            device_address=addr, on_state_change=cb, observable_uid=ObservableUID.POWER
+            device_address=addr,
+            on_state_change=cb,
+            observable_uid=ObservableUID.POWER,
+            channel_field_id="I/O",
+            channel_not_applicable=0x1E,
         ),
     ]
     if dimming:
@@ -721,6 +735,8 @@ def _factories(dimming: bool) -> list:
                 device_address=addr,
                 on_state_change=cb,
                 observable_uid=ObservableUID.OUTPUT_VALUE,
+                channel_field_id="I/O",
+                channel_not_applicable=0x1E,
             )
         )
     return base

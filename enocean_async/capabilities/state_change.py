@@ -21,6 +21,7 @@ class StateChange:
     observable_uid: str
     value: any
     unit: str | None = None
+    channel: int | None = None
     timestamp: float = field(default_factory=time)
     time_elapsed: float = 0
     source: StateChangeSource = StateChangeSource.TELEGRAM
