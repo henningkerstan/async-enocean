@@ -118,8 +118,8 @@ class ERP1Telegram:
         This calculation is given in the EEP specification.
         """
 
-        if range_max <= range_min:
-            raise ValueError("range_max must be greater than range_min")
+        if range_max == range_min:
+            raise ValueError("range_max must differ from range_min")
 
         if scale_max <= scale_min:
             raise ValueError("scale_max must be greater than scale_min")
@@ -127,10 +127,8 @@ class ERP1Telegram:
         # maximum value that can be represented with 'size' bits is 2^size - 1; due to the parameter checks in bitstring_raw_value, size > 0, hence max_raw >= 1
         max_raw = (1 << size) - 1
 
-        if range_max > max_raw:
-            raise ValueError(
-                f"range_max cannot be greater than {max_raw} for size {size}"
-            )
+        if max(range_min, range_max) > max_raw:
+            raise ValueError(f"range min/max cannot exceed {max_raw} for size {size}")
 
         multiplier = (scale_max - scale_min) / (range_max - range_min)
 

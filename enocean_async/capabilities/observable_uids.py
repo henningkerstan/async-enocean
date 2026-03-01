@@ -33,8 +33,18 @@ class ObservableUID:
     ENERGY = "energy"
     POWER = "power"
 
-    # Button / occupancy
+    # Button / occupancy / contact
+    CONTACT_STATE = "contact_state"
+    DAY_NIGHT = "day_night"
     OCCUPANCY_BUTTON = "occupancy_button"
+
+    # Room operating panel controls
+    FAN_SPEED = "fan_speed"
+    SET_POINT = "set_point"
+    TEMPERATURE_SETPOINT = "temperature_setpoint"
+
+    # HVAC actuator
+    VALVE_POSITION = "valve_position"
 
     # Metadata
     RSSI = "rssi"
