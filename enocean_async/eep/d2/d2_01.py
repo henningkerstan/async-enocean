@@ -338,7 +338,6 @@ _CMD_0x4_ActuatorStatusResponse = EEPTelegram(
             offset=17,
             size=7,
             range_enum=_OUTPUT_VALUE_ENUM,
-            observable_uid=ObservableUID.OUTPUT_VALUE,
         ),
     ],
 )
@@ -649,6 +648,20 @@ _ENERGY_UN = {0x00, 0x01, 0x02}
 _POWER_UN = {0x03, 0x04}
 
 
+def _resolve_switch_state(values: dict[str, EEPMessageValue]) -> EEPMessageValue | None:
+    ov = values.get("OV")
+    if ov is None or ov.raw == 0x7F:
+        return None
+    return EEPMessageValue(raw=ov.raw, value=ov.raw > 0, unit=None)
+
+
+def _resolve_output_value(values: dict[str, EEPMessageValue]) -> EEPMessageValue | None:
+    ov = values.get("OV")
+    if ov is None or ov.raw > 100:
+        return None
+    return EEPMessageValue(raw=ov.raw, value=ov.raw, unit="%")
+
+
 def _resolve_energy(values: dict[str, EEPMessageValue]) -> EEPMessageValue | None:
     mv = values.get("MV")
     un = values.get("UN")
@@ -665,40 +678,58 @@ def _resolve_power(values: dict[str, EEPMessageValue]) -> EEPMessageValue | None
     return EEPMessageValue(raw=mv.raw, value=mv.raw, unit=_UN_TO_UNIT[un.raw])
 
 
-_SEMANTIC_RESOLVERS = {
+_BASE_RESOLVERS = {
+    ObservableUID.SWITCH_STATE: _resolve_switch_state,
     ObservableUID.ENERGY: _resolve_energy,
     ObservableUID.POWER: _resolve_power,
 }
+_DIMMER_RESOLVERS = {
+    **_BASE_RESOLVERS,
+    ObservableUID.OUTPUT_VALUE: _resolve_output_value,
+}
 
-_CAPABILITY_FACTORIES = [
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable_uid=ObservableUID.OUTPUT_VALUE,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable_uid=ObservableUID.ERROR_LEVEL,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable_uid=ObservableUID.PILOT_WIRE_MODE,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr, on_state_change=cb, observable_uid=ObservableUID.ENERGY
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr, on_state_change=cb, observable_uid=ObservableUID.POWER
-    ),
-]
+_sc = ScalarCapability  # local alias to keep factory lines short
+
+
+def _factories(dimming: bool) -> list:
+    base = [
+        lambda addr, cb: _sc(
+            device_address=addr,
+            on_state_change=cb,
+            observable_uid=ObservableUID.SWITCH_STATE,
+        ),
+        lambda addr, cb: _sc(
+            device_address=addr,
+            on_state_change=cb,
+            observable_uid=ObservableUID.ERROR_LEVEL,
+        ),
+        lambda addr, cb: _sc(
+            device_address=addr,
+            on_state_change=cb,
+            observable_uid=ObservableUID.PILOT_WIRE_MODE,
+        ),
+        lambda addr, cb: _sc(
+            device_address=addr, on_state_change=cb, observable_uid=ObservableUID.ENERGY
+        ),
+        lambda addr, cb: _sc(
+            device_address=addr, on_state_change=cb, observable_uid=ObservableUID.POWER
+        ),
+    ]
+    if dimming:
+        base.append(
+            lambda addr, cb: _sc(
+                device_address=addr,
+                on_state_change=cb,
+                observable_uid=ObservableUID.OUTPUT_VALUE,
+            )
+        )
+    return base
 
 
 # ---------------------------------------------------------------------------
 # EEPSpecification factory + all type variants
 # ---------------------------------------------------------------------------
-def _spec(type_id: int, name: str) -> EEPSpecification:
+def _spec(type_id: int, name: str, *, dimming: bool = False) -> EEPSpecification:
     """All variants share the same telegram format and action encoders."""
     return EEPSpecification(
         eep=EEP.from_string(f"D2-01-{type_id:02X}"),
@@ -709,25 +740,37 @@ def _spec(type_id: int, name: str) -> EEPSpecification:
         ecid_size=8,
         telegrams=EEP_D2_01_TELEGRAMS,
         command_encoders=_COMMAND_ENCODERS,
-        semantic_resolvers=_SEMANTIC_RESOLVERS,
-        capability_factories=_CAPABILITY_FACTORIES,
+        semantic_resolvers=_DIMMER_RESOLVERS if dimming else _BASE_RESOLVERS,
+        capability_factories=_factories(dimming),
     )
 
 
-EEP_D2_01_00 = _spec(0x00, "Type 0x00 – 1 channel, switching + dimming")
+EEP_D2_01_00 = _spec(0x00, "Type 0x00 – 1 channel, switching + dimming", dimming=True)
 EEP_D2_01_01 = _spec(0x01, "Type 0x01 – 1 channel, switching")
-EEP_D2_01_02 = _spec(0x02, "Type 0x02 – 1 channel, switching + dimming + metering")
-EEP_D2_01_03 = _spec(0x03, "Type 0x03 – 1 channel, switching + dimming + metering")
-EEP_D2_01_04 = _spec(0x04, "Type 0x04 – 1 channel, switching + dimming (configurable)")
+EEP_D2_01_02 = _spec(
+    0x02, "Type 0x02 – 1 channel, switching + dimming + metering", dimming=True
+)
+EEP_D2_01_03 = _spec(
+    0x03, "Type 0x03 – 1 channel, switching + dimming + metering", dimming=True
+)
+EEP_D2_01_04 = _spec(
+    0x04, "Type 0x04 – 1 channel, switching + dimming (configurable)", dimming=True
+)
 EEP_D2_01_05 = _spec(
-    0x05, "Type 0x05 – 1 channel, switching + dimming (configurable) + metering"
+    0x05,
+    "Type 0x05 – 1 channel, switching + dimming (configurable) + metering",
+    dimming=True,
 )
 EEP_D2_01_06 = _spec(0x06, "Type 0x06 – 1 channel, switching (no local control)")
 EEP_D2_01_07 = _spec(
     0x07, "Type 0x07 – 1 channel, switching (no local control) + metering"
 )
-EEP_D2_01_08 = _spec(0x08, "Type 0x08 – 1 channel, switching + dimming (local control)")
-EEP_D2_01_09 = _spec(0x09, "Type 0x09 – 1 channel, switching + dimming + pilot wire")
+EEP_D2_01_08 = _spec(
+    0x08, "Type 0x08 – 1 channel, switching + dimming (local control)", dimming=True
+)
+EEP_D2_01_09 = _spec(
+    0x09, "Type 0x09 – 1 channel, switching + dimming + pilot wire", dimming=True
+)
 EEP_D2_01_0A = _spec(0x0A, "Type 0x0A – 1 channel, switching (full feature set)")
 EEP_D2_01_0B = _spec(
     0x0B, "Type 0x0B – 1 channel, switching + metering (full feature set)"
@@ -744,4 +787,6 @@ EEP_D2_01_12 = _spec(0x12, "Type 0x12 – slot-in module, 2 channels, no meterin
 EEP_D2_01_13 = _spec(0x13, "Type 0x13 – 4 channels, switching")
 EEP_D2_01_14 = _spec(0x14, "Type 0x14 – 8 channels, switching")
 EEP_D2_01_15 = _spec(0x15, "Type 0x15 – 4 channels, switching")
-EEP_D2_01_16 = _spec(0x16, "Type 0x16 – 2 channels, dimming with configurable limits")
+EEP_D2_01_16 = _spec(
+    0x16, "Type 0x16 – 2 channels, dimming with configurable limits", dimming=True
+)

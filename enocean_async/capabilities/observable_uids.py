@@ -26,6 +26,7 @@ class ObservableUID:
     WINDOW_STATE = "window_state"
 
     # Switch / dimmer actuator
+    SWITCH_STATE = "switch_state"
     OUTPUT_VALUE = "output_value"
     ERROR_LEVEL = "error_level"
     PILOT_WIRE_MODE = "pilot_wire_mode"
