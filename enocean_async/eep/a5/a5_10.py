@@ -37,16 +37,15 @@ _FAN3_2223_ENUM: dict[int, str] = {
     4: "Speed 3",
 }
 
-_OCC_ENUM = {0: "Pressed", 1: "Released"}
-_OCC23_ENUM = {0: "Unoccupied", 1: "Occupied"}  # type 23: state, not button
+_BUTTON_ENUM = {0: "Pressed", 1: "Released"}  # OCC, OB, UNOCC — all active-low buttons
+_PRESENT_ENUM = {0: "Absent", 1: "Present"}  # TMP_F, SP_F, FAN_F presence flags
+_OCC23_ENUM = {0: "Unoccupied", 1: "Occupied"}  # type 23: occupancy state, not button
 _SLSW_ENUM = {0: "Night/Off", 1: "Day/On"}
 _CTST_ENUM = {0: "Closed", 1: "Open"}
 _OED_ENUM = {0: "Enabled", 1: "Disabled"}
-_OB_ENUM = {0: "Pressed", 1: "Released"}
 _SPM_ENUM = {0: "Auto", 1: "Auto+User", 2: "Override", 3: "User"}
 _BATT_ENUM = {0: "OK", 1: "Low"}
 _ACT_ENUM = {0: "No action", 1: "User interaction"}
-_UNOCC_ENUM = {0: "Pressed", 1: "Released"}
 
 # ---------------------------------------------------------------------------
 # Field factories
@@ -326,7 +325,7 @@ def _occ() -> EEPDataField:
         name="Occupancy button",
         offset=31,
         size=1,
-        range_enum=_OCC_ENUM,
+        range_enum=_BUTTON_ENUM,
         observable_uid=ObservableUID.OCCUPANCY_BUTTON,
     )
 
@@ -383,7 +382,7 @@ def _ob(offset: int) -> EEPDataField:
         name="Occupancy button",
         offset=offset,
         size=1,
-        range_enum=_OB_ENUM,
+        range_enum=_BUTTON_ENUM,
         observable_uid=ObservableUID.OCCUPANCY_BUTTON,
     )
 
@@ -428,7 +427,7 @@ def _unocc() -> EEPDataField:
         name="Unoccupancy",
         offset=30,
         size=1,
-        range_enum=_UNOCC_ENUM,
+        range_enum=_BUTTON_ENUM,
     )
 
 
@@ -439,7 +438,7 @@ def _tmp_f() -> EEPDataField:
         name="Temperature flag",
         offset=25,
         size=1,
-        range_enum={0: "Absent", 1: "Present"},
+        range_enum=_PRESENT_ENUM,
     )
 
 
@@ -450,7 +449,7 @@ def _sp_f() -> EEPDataField:
         name="Set point flag",
         offset=26,
         size=1,
-        range_enum={0: "Absent", 1: "Present"},
+        range_enum=_PRESENT_ENUM,
     )
 
 
@@ -461,7 +460,7 @@ def _fan_f() -> EEPDataField:
         name="Fan speed flag",
         offset=27,
         size=1,
-        range_enum={0: "Absent", 1: "Present"},
+        range_enum=_PRESENT_ENUM,
     )
 
 
