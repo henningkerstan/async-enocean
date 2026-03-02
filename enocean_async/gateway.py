@@ -211,7 +211,7 @@ class Gateway:
                 f"Successfully connected to EnOcean module on {self.__port} at baudrate {self.__baudrate}"
             )
         except Exception as e:
-            self._logger.warning(
+            self._logger.error(
                 f"Failed to connect to EnOcean module on {self.__port} at baudrate {self.__baudrate}: {e}"
             )
             raise ConnectionError(
