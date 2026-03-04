@@ -1,6 +1,6 @@
 from enocean_async.eep.manufacturer import Manufacturer
 
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
 from ..id import EEP
 from ..profile import EEPDataField, SimpleProfileSpecification
@@ -9,7 +9,7 @@ _WIN_FACTORIES = [
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.WINDOW_STATE,
+        observable=Observable.WINDOW_STATE,
     ),
 ]
 
@@ -29,7 +29,7 @@ EEP_F6_10_00 = SimpleProfileSpecification(
                 2: "open",  # was closed, now open
                 3: "closed",  # "window now closed"
             },
-            observable_uid=ObservableUID.WINDOW_STATE,
+            observable=Observable.WINDOW_STATE,
         ),
     ],
     capability_factories=_WIN_FACTORIES,
@@ -49,7 +49,7 @@ EEP_F6_10_00_ELTAKO = SimpleProfileSpecification(
                 0xE0: "open",
                 0xF0: "closed",
             },
-            observable_uid=ObservableUID.WINDOW_STATE,
+            observable=Observable.WINDOW_STATE,
         ),
     ],
     capability_factories=_WIN_FACTORIES,

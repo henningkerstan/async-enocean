@@ -1,13 +1,13 @@
 """A5-38-08: Central command - gateway."""
 
-from ...capabilities.action_uid import ActionUID
-from ...capabilities.dimmer_actions import DimAction
+from ...capabilities.action import Action
+from ...capabilities.dimmer_commands import Dim
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
 from ..profile import EEPDataField, EEPSpecification, EEPTelegram
 
 
-def _encode_dim(action: DimAction) -> EEPMessage:
+def _encode_dim(action: Dim) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=2, description="Dimming"),
@@ -91,6 +91,6 @@ EEP_A5_38_08 = EEPSpecification(
         )
     },
     command_encoders={
-        ActionUID.DIM: _encode_dim,
+        Action.DIM: _encode_dim,
     },
 )

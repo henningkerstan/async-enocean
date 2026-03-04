@@ -2,6 +2,8 @@ from dataclasses import dataclass, field
 import math
 from typing import Any, Callable
 
+from ..capabilities.action import Action
+from ..capabilities.observable import Observable
 from .id import EEP
 
 type TelegramRawValues = dict[str, int]
@@ -49,9 +51,9 @@ class EEPDataField:
     range_enum: dict[int, str] | None = None
     """Enumeration of possible values for the data field, if applicable."""
 
-    observable_uid: str | None = None
-    """Semantic entity UID to which this field's decoded value is propagated (e.g. 'temperature', 'illumination').
-    When set, EEPHandler copies msg.values[field.id] → msg.values[observable_uid] after decoding."""
+    observable: Observable | None = None
+    """Observable type to which this field's decoded value is propagated (e.g. Observable.TEMPERATURE).
+    When set, EEPHandler copies msg.values[field.id] → msg.entities[observable] after decoding."""
 
     def __post_init__(self):
         if self.range_enum:
@@ -111,16 +113,16 @@ class EEPSpecification:
     telegrams: dict[int, EEPTelegram] = field(default_factory=dict)
     """Dictionary of telegrams defined for this EEP, keyed by their command/message identifier, each with its own structure and data fields."""
 
-    semantic_resolvers: dict[str, SemanticResolver] = field(default_factory=dict)
-    """Dict mapping observable_uid → resolver function. Each resolver receives the full decoded values dict
-    and returns a single EEPMessageValue (or None) to be stored under that observable_uid key."""
+    semantic_resolvers: dict[Observable, SemanticResolver] = field(default_factory=dict)
+    """Dict mapping Observable → resolver function. Each resolver receives the full decoded values dict
+    and returns a single EEPMessageValue (or None) to be stored under that Observable key."""
 
     capability_factories: list[CapabilityFactory] = field(default_factory=list)
     """Ordered list of capability factory callables. Each factory takes (device_address, on_state_change)
     and returns a Capability instance. MetaDataCapability is always prepended by the gateway."""
 
-    command_encoders: dict[str, CommandEncoder] = field(default_factory=dict)
-    """Dict mapping ActionUID → encoder function. Each encoder takes a DeviceCommand and returns
+    command_encoders: dict[Action, CommandEncoder] = field(default_factory=dict)
+    """Dict mapping Action → encoder function. Each encoder takes a Command and returns
     an EEPMessage with message_type.id set and values filled with raw field values (field_id → raw int).
     The gateway sets message.sender and message.destination before calling EEPHandler.encode()."""
 
@@ -134,9 +136,9 @@ class SimpleProfileSpecification(EEPSpecification):
         eep: EEP,
         name: str,
         datafields: list[EEPDataField],
-        semantic_resolvers: dict[str, SemanticResolver] | None = None,
+        semantic_resolvers: dict[Observable, SemanticResolver] | None = None,
         capability_factories: list[CapabilityFactory] | None = None,
-        command_encoders: dict[str, CommandEncoder] | None = None,
+        command_encoders: dict[Action, CommandEncoder] | None = None,
     ):
         """Initialize a single-telegram EEP.
 
@@ -144,9 +146,9 @@ class SimpleProfileSpecification(EEPSpecification):
             eep: Unique identifier for the EEP.
             name: Human-readable name/description.
             datafields: List of data fields in the unique telegram that is defined for this EEP.
-            semantic_resolvers: Optional dict of observable_uid → resolver for multi-field combinations.
+            semantic_resolvers: Optional dict of Observable → resolver for multi-field combinations.
             capability_factories: Optional list of capability factory callables.
-            command_encoders: Optional dict of ActionUID → encoder callables.
+            command_encoders: Optional dict of Action → encoder callables.
         """
 
         super().__init__(

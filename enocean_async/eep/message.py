@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, NamedTuple
 
 from ..address import EURID, Address, BaseAddress, BroadcastAddress
+from ..capabilities.observable import Observable
 from ..eep.id import EEP
 
 
@@ -68,10 +69,10 @@ class EEPMessage:
     Keys are EEP field IDs (e.g., 'R1', 'POS'); values are corresponding raw/interpreted pairs.
     """
 
-    entities: Dict[str, EntityValue] = field(default_factory=dict)
-    """A dictionary of semantically interpreted values keyed by ObservableUID.
+    entities: Dict[Observable, EntityValue] = field(default_factory=dict)
+    """A dictionary of semantically interpreted values keyed by Observable.
 
-    Keys are semantic observable UIDs (e.g., 'temperature', 'position').
+    Keys are Observable enum members (e.g., Observable.TEMPERATURE, Observable.POSITION).
     Values are EntityValue tuples containing (value, unit).
     """
 

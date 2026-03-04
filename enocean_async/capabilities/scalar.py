@@ -1,23 +1,24 @@
-"""Generic scalar capability driven by observable_uid annotation on EEP fields."""
+"""Generic scalar capability driven by observable annotation on EEP fields."""
 
 from dataclasses import dataclass, field
 from time import time
 
 from ..eep.message import EEPMessage
 from .capability import Capability
+from .observable import Observable
 from .state_change import StateChange, StateChangeSource
 
 
 @dataclass
 class ScalarCapability(Capability):
-    """Generic capability that emits a StateChange for any EEP field annotated with a matching observable_uid.
+    """Generic capability that emits a StateChange for any EEP field annotated with a matching observable.
 
-    This capability reads from the EEP-level observable_uid key that was propagated into EEPMessage.entities by EEPHandler.
+    This capability reads from the EEP-level observable key that was propagated into EEPMessage.entities by EEPHandler.
     This makes it fully EEP-agnostic.
     """
 
-    observable_uid: str = field(kw_only=True)
-    """The entity UID to read from EEPMessage.entities and emit as a StateChange."""
+    observable: Observable = field(kw_only=True)
+    """The observable type to read from EEPMessage.entities and emit as a StateChange."""
 
     channel_field_id: str | None = field(default=None, kw_only=True)
     """If set, read this field ID from message.values to populate StateChange.channel."""
@@ -26,7 +27,7 @@ class ScalarCapability(Capability):
     """Raw channel value that means 'not applicable'; mapped to channel=None in StateChange."""
 
     def _decode_impl(self, message: EEPMessage) -> None:
-        v = message.entities.get(self.observable_uid)
+        v = message.entities.get(self.observable)
         if v is None or v.value is None:
             return
 
@@ -39,7 +40,7 @@ class ScalarCapability(Capability):
         self._emit(
             StateChange(
                 device_address=self.device_address,
-                observable_uid=self.observable_uid,
+                observable=self.observable,
                 value=v.value,
                 unit=v.unit,
                 channel=channel,

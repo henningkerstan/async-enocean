@@ -32,7 +32,7 @@ class MetaDataCapability(Capability):
             self._emit(
                 StateChange(
                     device_address=self.device_address,
-                    observable_uid="rssi",
+                    observable="rssi",
                     value=message.rssi,
                     timestamp=timestamp,
                     source=StateChangeSource.TELEGRAM,
@@ -43,7 +43,7 @@ class MetaDataCapability(Capability):
         self._emit(
             StateChange(
                 device_address=self.device_address,
-                observable_uid="last_seen",
+                observable="last_seen",
                 value=timestamp,
                 timestamp=timestamp,
                 source=StateChangeSource.TELEGRAM,
@@ -54,7 +54,7 @@ class MetaDataCapability(Capability):
         self._emit(
             StateChange(
                 device_address=self.device_address,
-                observable_uid="telegram_count",
+                observable="telegram_count",
                 value=self._telegram_count,
                 timestamp=timestamp,
                 source=StateChangeSource.TELEGRAM,

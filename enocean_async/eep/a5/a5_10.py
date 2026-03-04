@@ -1,6 +1,6 @@
 """A5-10-XX: Room Operating Panel (4BS telegram)."""
 
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
 from ..id import EEP
 from ..profile import EEPDataField, SimpleProfileSpecification
@@ -60,7 +60,7 @@ def _fan8() -> EEPDataField:
         offset=0,
         size=8,
         range_enum=_FAN8_ENUM,
-        observable_uid=ObservableUID.FAN_SPEED,
+        observable=Observable.FAN_SPEED,
     )
 
 
@@ -72,7 +72,7 @@ def _fan3(offset: int) -> EEPDataField:
         offset=offset,
         size=3,
         range_enum=_FAN3_ENUM,
-        observable_uid=ObservableUID.FAN_SPEED,
+        observable=Observable.FAN_SPEED,
     )
 
 
@@ -84,7 +84,7 @@ def _fan3_2223(offset: int) -> EEPDataField:
         offset=offset,
         size=3,
         range_enum=_FAN3_2223_ENUM,
-        observable_uid=ObservableUID.FAN_SPEED,
+        observable=Observable.FAN_SPEED,
     )
 
 
@@ -100,7 +100,7 @@ def _sp8(offset: int) -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 255.0,
         unit_fn=lambda _: "",
-        observable_uid=ObservableUID.SET_POINT,
+        observable=Observable.SET_POINT,
     )
 
 
@@ -116,7 +116,7 @@ def _sp6(offset: int) -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 63.0,
         unit_fn=lambda _: "",
-        observable_uid=ObservableUID.SET_POINT,
+        observable=Observable.SET_POINT,
     )
 
 
@@ -132,7 +132,7 @@ def _tmp_inv() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 40.0,
         unit_fn=lambda _: "°C",
-        observable_uid=ObservableUID.TEMPERATURE,
+        observable=Observable.TEMPERATURE,
     )
 
 
@@ -148,7 +148,7 @@ def _tmp_fwd() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 40.0,
         unit_fn=lambda _: "°C",
-        observable_uid=ObservableUID.TEMPERATURE,
+        observable=Observable.TEMPERATURE,
     )
 
 
@@ -164,7 +164,7 @@ def _tmp_inv250() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 40.0,
         unit_fn=lambda _: "°C",
-        observable_uid=ObservableUID.TEMPERATURE,
+        observable=Observable.TEMPERATURE,
     )
 
 
@@ -180,7 +180,7 @@ def _tmp_inv255() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 40.0,
         unit_fn=lambda _: "°C",
-        observable_uid=ObservableUID.TEMPERATURE,
+        observable=Observable.TEMPERATURE,
     )
 
 
@@ -196,7 +196,7 @@ def _tmp10_inv() -> EEPDataField:
         scale_min_fn=lambda _: -10.0,
         scale_max_fn=lambda _: 41.2,
         unit_fn=lambda _: "°C",
-        observable_uid=ObservableUID.TEMPERATURE,
+        observable=Observable.TEMPERATURE,
     )
 
 
@@ -212,7 +212,7 @@ def _tmpsp_inv250() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 40.0,
         unit_fn=lambda _: "°C",
-        observable_uid=ObservableUID.TEMPERATURE_SETPOINT,
+        observable=Observable.TEMPERATURE_SETPOINT,
     )
 
 
@@ -227,7 +227,7 @@ def _hum() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 100.0,
         unit_fn=lambda _: "%",
-        observable_uid=ObservableUID.HUMIDITY,
+        observable=Observable.HUMIDITY,
     )
 
 
@@ -243,7 +243,7 @@ def _hum_db3() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 100.0,
         unit_fn=lambda _: "%",
-        observable_uid=ObservableUID.HUMIDITY,
+        observable=Observable.HUMIDITY,
     )
 
 
@@ -274,7 +274,7 @@ def _ill() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 1000.0,
         unit_fn=lambda _: "lx",
-        observable_uid=ObservableUID.ILLUMINATION,
+        observable=Observable.ILLUMINATION,
     )
 
 
@@ -305,7 +305,7 @@ def _sv() -> EEPDataField:
         scale_min_fn=lambda _: 0.0,
         scale_max_fn=lambda _: 5.0,
         unit_fn=lambda _: "V",
-        observable_uid=ObservableUID.VOLTAGE,
+        observable=Observable.VOLTAGE,
     )
 
 
@@ -326,7 +326,7 @@ def _occ() -> EEPDataField:
         offset=31,
         size=1,
         range_enum=_BUTTON_ENUM,
-        observable_uid=ObservableUID.OCCUPANCY_BUTTON,
+        observable=Observable.OCCUPANCY_BUTTON,
     )
 
 
@@ -338,7 +338,7 @@ def _occ23() -> EEPDataField:
         offset=31,
         size=1,
         range_enum=_OCC23_ENUM,
-        observable_uid=ObservableUID.OCCUPANCY_BUTTON,
+        observable=Observable.OCCUPANCY_BUTTON,
     )
 
 
@@ -349,7 +349,7 @@ def _slsw() -> EEPDataField:
         offset=31,
         size=1,
         range_enum=_SLSW_ENUM,
-        observable_uid=ObservableUID.DAY_NIGHT,
+        observable=Observable.DAY_NIGHT,
     )
 
 
@@ -360,7 +360,7 @@ def _ctst() -> EEPDataField:
         offset=31,
         size=1,
         range_enum=_CTST_ENUM,
-        observable_uid=ObservableUID.CONTACT_STATE,
+        observable=Observable.CONTACT_STATE,
     )
 
 
@@ -383,7 +383,7 @@ def _ob(offset: int) -> EEPDataField:
         offset=offset,
         size=1,
         range_enum=_BUTTON_ENUM,
-        observable_uid=ObservableUID.OCCUPANCY_BUTTON,
+        observable=Observable.OCCUPANCY_BUTTON,
     )
 
 
@@ -471,20 +471,20 @@ def _fan_f() -> EEPDataField:
 
 def _cap(uid: str):
     return lambda addr, cb: ScalarCapability(
-        device_address=addr, on_state_change=cb, observable_uid=uid
+        device_address=addr, on_state_change=cb, observable=uid
     )
 
 
-_CAP_TMP = _cap(ObservableUID.TEMPERATURE)
-_CAP_HUM = _cap(ObservableUID.HUMIDITY)
-_CAP_SP = _cap(ObservableUID.SET_POINT)
-_CAP_TMPSP = _cap(ObservableUID.TEMPERATURE_SETPOINT)
-_CAP_FAN = _cap(ObservableUID.FAN_SPEED)
-_CAP_OCC = _cap(ObservableUID.OCCUPANCY_BUTTON)
-_CAP_SLSW = _cap(ObservableUID.DAY_NIGHT)
-_CAP_CTST = _cap(ObservableUID.CONTACT_STATE)
-_CAP_ILL = _cap(ObservableUID.ILLUMINATION)
-_CAP_VOLT = _cap(ObservableUID.VOLTAGE)
+_CAP_TMP = _cap(Observable.TEMPERATURE)
+_CAP_HUM = _cap(Observable.HUMIDITY)
+_CAP_SP = _cap(Observable.SET_POINT)
+_CAP_TMPSP = _cap(Observable.TEMPERATURE_SETPOINT)
+_CAP_FAN = _cap(Observable.FAN_SPEED)
+_CAP_OCC = _cap(Observable.OCCUPANCY_BUTTON)
+_CAP_SLSW = _cap(Observable.DAY_NIGHT)
+_CAP_CTST = _cap(Observable.CONTACT_STATE)
+_CAP_ILL = _cap(Observable.ILLUMINATION)
+_CAP_VOLT = _cap(Observable.VOLTAGE)
 
 # ---------------------------------------------------------------------------
 # Profile builder

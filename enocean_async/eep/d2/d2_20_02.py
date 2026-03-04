@@ -1,13 +1,13 @@
 """D2-20-02: Fan control, type 0x02."""
 
-from ...capabilities.action_uid import ActionUID
-from ...capabilities.fan_actions import SetFanSpeedAction
+from ...capabilities.action import Action
+from ...capabilities.fan_commands import SetFanSpeed
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
 from ..profile import EEPDataField, EEPSpecification, EEPTelegram
 
 
-def _encode_set_fan_speed(action: SetFanSpeedAction) -> EEPMessage:
+def _encode_set_fan_speed(action: SetFanSpeed) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=0, description="Fan control message"),
@@ -150,6 +150,6 @@ EEP_D2_20_02 = EEPSpecification(
         ),
     },
     command_encoders={
-        ActionUID.SET_FAN_SPEED: _encode_set_fan_speed,
+        Action.SET_FAN_SPEED: _encode_set_fan_speed,
     },
 )

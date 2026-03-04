@@ -1,17 +1,17 @@
-"""Typed actions for fan speed control (D2-20-02)."""
+"""Typed commands for fan speed control (D2-20-02)."""
 
 from dataclasses import dataclass
 from typing import ClassVar
 
 from .action import Action
-from .action_uid import ActionUID
+from .command import Command
 
 
 @dataclass
-class SetFanSpeedAction(Action):
+class SetFanSpeed(Command):
     """Set the fan speed of a controlled ventilation unit."""
 
-    action_uid: ClassVar[str] = ActionUID.SET_FAN_SPEED
+    action: ClassVar[Action] = Action.SET_FAN_SPEED
 
     fan_speed: int
     """FS field: 0–100 = percentage, 253 = Auto, 254 = Default, 255 = No change."""

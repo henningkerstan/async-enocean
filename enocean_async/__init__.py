@@ -7,24 +7,20 @@ __date__ = "2026-03-01"
 
 from .address import EURID, Address, BaseAddress, BroadcastAddress, SenderAddress
 from .capabilities.action import Action
-from .capabilities.action_uid import ActionUID
-from .capabilities.cover_actions import (
-    QueryCoverPositionAction,
-    SetCoverPositionAction,
-    StopCoverAction,
-)
-from .capabilities.dimmer_actions import DimAction
-from .capabilities.fan_actions import SetFanSpeedAction
-from .capabilities.observable_uids import ObservableUID
+from .capabilities.command import Command
+from .capabilities.cover_commands import QueryCoverPosition, SetCoverPosition, StopCover
+from .capabilities.dimmer_commands import Dim
+from .capabilities.fan_commands import SetFanSpeed
+from .capabilities.observable import Observable
 from .capabilities.state_change import (
     StateChange,
     StateChangeCallback,
     StateChangeSource,
 )
-from .capabilities.switch_actions import (
-    QueryActuatorMeasurementAction,
-    QueryActuatorStatusAction,
-    SetSwitchOutputAction,
+from .capabilities.switch_commands import (
+    QueryActuatorMeasurement,
+    QueryActuatorStatus,
+    SetSwitchOutput,
 )
 from .device.device import Device
 from .eep import EEP_SPECIFICATIONS
@@ -50,18 +46,18 @@ __all__ = [
     "BroadcastAddress",
     "EURID",
     "SenderAddress",
-    # Actions and vocabulary
+    # Actions, Commands, and vocabulary
     "Action",
-    "ActionUID",
-    "DimAction",
-    "ObservableUID",
-    "QueryActuatorMeasurementAction",
-    "QueryActuatorStatusAction",
-    "QueryCoverPositionAction",
-    "SetCoverPositionAction",
-    "SetFanSpeedAction",
-    "SetSwitchOutputAction",
-    "StopCoverAction",
+    "Command",
+    "Dim",
+    "Observable",
+    "QueryActuatorMeasurement",
+    "QueryActuatorStatus",
+    "QueryCoverPosition",
+    "SetCoverPosition",
+    "SetFanSpeed",
+    "SetSwitchOutput",
+    "StopCover",
     # State changes
     "StateChange",
     "StateChangeCallback",

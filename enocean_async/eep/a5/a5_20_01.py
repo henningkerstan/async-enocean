@@ -4,7 +4,7 @@ Only the inbound direction (actuator → controller, status report) is decoded.
 The outbound direction (controller → actuator, command) is not yet implemented.
 """
 
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
 from ..id import EEP
 from ..profile import EEPDataField, SimpleProfileSpecification
@@ -24,7 +24,7 @@ EEP_A5_20_01 = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0.0,
             scale_max_fn=lambda _: 100.0,
             unit_fn=lambda _: "%",
-            observable_uid=ObservableUID.VALVE_POSITION,
+            observable=Observable.VALVE_POSITION,
         ),
         # DB2: status flags (8 individual bits)
         EEPDataField(
@@ -94,7 +94,7 @@ EEP_A5_20_01 = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0.0,
             scale_max_fn=lambda _: 40.0,
             unit_fn=lambda _: "°C",
-            observable_uid=ObservableUID.TEMPERATURE,
+            observable=Observable.TEMPERATURE,
         ),
         # DB0.3: LRN bit
         EEPDataField(
@@ -109,12 +109,12 @@ EEP_A5_20_01 = SimpleProfileSpecification(
         lambda addr, cb: ScalarCapability(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.VALVE_POSITION,
+            observable=Observable.VALVE_POSITION,
         ),
         lambda addr, cb: ScalarCapability(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.TEMPERATURE,
+            observable=Observable.TEMPERATURE,
         ),
     ],
 )

@@ -46,7 +46,7 @@ class PushButtonCapability(Capability):
             self._emit(
                 StateChange(
                     device_address=self.device_address,
-                    observable_uid=button_id,
+                    observable=button_id,
                     value=HOLD,
                     timestamp=time(),
                     time_elapsed=duration,
@@ -70,7 +70,7 @@ class PushButtonCapability(Capability):
         self._emit(
             StateChange(
                 device_address=self.device_address,
-                observable_uid=button_id,
+                observable=button_id,
                 value=RELEASED,
                 timestamp=time(),
                 time_elapsed=duration,
@@ -107,7 +107,7 @@ class PushButtonCapability(Capability):
         self._emit(
             StateChange(
                 device_address=self.device_address,
-                observable_uid=button_id,
+                observable=button_id,
                 value=PUSHED,
                 timestamp=current_time,
                 source=StateChangeSource.TELEGRAM,
@@ -121,7 +121,7 @@ class PushButtonCapability(Capability):
             self._emit(
                 StateChange(
                     device_address=self.device_address,
-                    observable_uid=button_id,
+                    observable=button_id,
                     value=RELEASED,
                     timestamp=current_time,
                     source=StateChangeSource.TELEGRAM,
@@ -149,7 +149,7 @@ class PushButtonCapability(Capability):
                 self._emit(
                     StateChange(
                         device_address=self.device_address,
-                        observable_uid=button_id,
+                        observable=button_id,
                         value=DOUBLE_CLICK,
                         timestamp=current_time,
                         time_elapsed=duration,
@@ -161,7 +161,7 @@ class PushButtonCapability(Capability):
                 self._emit(
                     StateChange(
                         device_address=self.device_address,
-                        observable_uid=button_id,
+                        observable=button_id,
                         value=CLICK,
                         timestamp=current_time,
                         time_elapsed=duration,
@@ -173,7 +173,7 @@ class PushButtonCapability(Capability):
         self._emit(
             StateChange(
                 device_address=self.device_address,
-                observable_uid=button_id,
+                observable=button_id,
                 value=RELEASED,
                 timestamp=current_time,
                 time_elapsed=duration,

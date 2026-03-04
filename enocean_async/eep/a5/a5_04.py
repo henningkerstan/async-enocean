@@ -1,6 +1,6 @@
 """A5-04-XX: Temperature and humidity sensors."""
 
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
 from ..id import EEP
 from ..profile import EEPDataField, SimpleProfileSpecification
@@ -9,12 +9,12 @@ _TEMP_HUM_FACTORIES = [
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.HUMIDITY,
+        observable=Observable.HUMIDITY,
     ),
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.TEMPERATURE,
+        observable=Observable.TEMPERATURE,
     ),
 ]
 
@@ -35,7 +35,7 @@ class _EEP_A5_04_01_02(SimpleProfileSpecification):
                     scale_min_fn=lambda _: 0.0,
                     scale_max_fn=lambda _: 100.0,
                     unit_fn=lambda _: "%",
-                    observable_uid=ObservableUID.HUMIDITY,
+                    observable=Observable.HUMIDITY,
                 ),
                 EEPDataField(
                     id="TMP",
@@ -47,7 +47,7 @@ class _EEP_A5_04_01_02(SimpleProfileSpecification):
                     scale_min_fn=lambda _: min_temp,
                     scale_max_fn=lambda _: max_temp,
                     unit_fn=lambda _: "°C",
-                    observable_uid=ObservableUID.TEMPERATURE,
+                    observable=Observable.TEMPERATURE,
                 ),
                 EEPDataField(
                     id="TSN",
@@ -78,7 +78,7 @@ EEP_A5_04_03 = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0.0,
             scale_max_fn=lambda _: 100.0,
             unit_fn=lambda _: "%",
-            observable_uid=ObservableUID.HUMIDITY,
+            observable=Observable.HUMIDITY,
         ),
         EEPDataField(
             id="TMP",
@@ -88,7 +88,7 @@ EEP_A5_04_03 = SimpleProfileSpecification(
             scale_min_fn=lambda _: -20.0,
             scale_max_fn=lambda _: 60.0,
             unit_fn=lambda _: "°C",
-            observable_uid=ObservableUID.TEMPERATURE,
+            observable=Observable.TEMPERATURE,
         ),
         EEPDataField(
             id="TTP",

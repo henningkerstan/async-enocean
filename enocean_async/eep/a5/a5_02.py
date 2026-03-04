@@ -1,6 +1,6 @@
 """A5-02-XX: Temperature sensors."""
 
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
 from ..id import EEP
 from ..profile import EEPDataField, SimpleProfileSpecification
@@ -27,14 +27,14 @@ class _EEP_A5_02(SimpleProfileSpecification):
                     scale_min_fn=lambda _: scale_min,
                     scale_max_fn=lambda _: scale_max,
                     unit_fn=lambda _: "°C",
-                    observable_uid=ObservableUID.TEMPERATURE,
+                    observable=Observable.TEMPERATURE,
                 )
             ],
             capability_factories=[
                 lambda addr, cb: ScalarCapability(
                     device_address=addr,
                     on_state_change=cb,
-                    observable_uid=ObservableUID.TEMPERATURE,
+                    observable=Observable.TEMPERATURE,
                 ),
             ],
         )

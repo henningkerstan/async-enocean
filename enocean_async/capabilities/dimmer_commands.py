@@ -1,17 +1,17 @@
-"""Typed actions for central command / dimmer control (A5-38-08)."""
+"""Typed commands for central command / dimmer control (A5-38-08)."""
 
 from dataclasses import dataclass
 from typing import ClassVar
 
 from .action import Action
-from .action_uid import ActionUID
+from .command import Command
 
 
 @dataclass
-class DimAction(Action):
+class Dim(Command):
     """Dim a light to a specific value."""
 
-    action_uid: ClassVar[str] = ActionUID.DIM
+    action: ClassVar[Action] = Action.DIM
 
     dim_value: int
     """EDIM field: 0–255. Absolute range 0–100 % or relative -100 %–+100 % depending on ``relative``."""

@@ -1,44 +1,40 @@
 from .action import Action
-from .action_uid import ActionUID
 from .capability import Capability
-from .cover_actions import (
-    QueryCoverPositionAction,
-    SetCoverPositionAction,
-    StopCoverAction,
-)
-from .dimmer_actions import DimAction
-from .fan_actions import SetFanSpeedAction
+from .command import Command
+from .cover_commands import QueryCoverPosition, SetCoverPosition, StopCover
+from .dimmer_commands import Dim
+from .fan_commands import SetFanSpeed
 from .metadata import MetaDataCapability
-from .observable_uids import ObservableUID
+from .observable import Observable
 from .position_angle import CoverCapability
 from .push_button import F6_02_01_02PushButtonCapability, PushButtonCapability
 from .scalar import ScalarCapability
 from .state_change import StateChange, StateChangeCallback, StateChangeSource
-from .switch_actions import (
-    QueryActuatorMeasurementAction,
-    QueryActuatorStatusAction,
-    SetSwitchOutputAction,
+from .switch_commands import (
+    QueryActuatorMeasurement,
+    QueryActuatorStatus,
+    SetSwitchOutput,
 )
 
 __all__ = [
     "Action",
-    "ActionUID",
     "Capability",
+    "Command",
     "CoverCapability",
-    "DimAction",
+    "Dim",
     "F6_02_01_02PushButtonCapability",
     "MetaDataCapability",
-    "ObservableUID",
+    "Observable",
     "PushButtonCapability",
-    "QueryActuatorMeasurementAction",
-    "QueryActuatorStatusAction",
-    "QueryCoverPositionAction",
+    "QueryActuatorMeasurement",
+    "QueryActuatorStatus",
+    "QueryCoverPosition",
     "ScalarCapability",
-    "SetCoverPositionAction",
-    "SetFanSpeedAction",
-    "SetSwitchOutputAction",
+    "SetCoverPosition",
+    "SetFanSpeed",
+    "SetSwitchOutput",
     "StateChange",
     "StateChangeCallback",
     "StateChangeSource",
-    "StopCoverAction",
+    "StopCover",
 ]

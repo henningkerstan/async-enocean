@@ -12,13 +12,13 @@ implemented, so dimming-limits sub-telegrams are registered under synthetic keys
 
 from dataclasses import dataclass
 
-from ...capabilities.action_uid import ActionUID
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.action import Action
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
-from ...capabilities.switch_actions import (
-    QueryActuatorMeasurementAction,
-    QueryActuatorStatusAction,
-    SetSwitchOutputAction,
+from ...capabilities.switch_commands import (
+    QueryActuatorMeasurement,
+    QueryActuatorStatus,
+    SetSwitchOutput,
 )
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
@@ -319,7 +319,7 @@ _CMD_0x4_ActuatorStatusResponse = EEPTelegram(
                 0b10: "Hardware failure",
                 0b11: "Not supported",
             },
-            observable_uid=ObservableUID.ERROR_LEVEL,
+            observable=Observable.ERROR_LEVEL,
         ),
         _io(not_applicable_at_1e=True),
         EEPDataField(
@@ -480,7 +480,7 @@ _CMD_0xA_ActuatorPilotWireModeResponse = EEPTelegram(
             offset=13,
             size=3,
             range_enum=_PILOT_WIRE_ENUM,
-            observable_uid=ObservableUID.PILOT_WIRE_MODE,
+            observable=Observable.PILOT_WIRE_MODE,
         ),
     ],
 )
@@ -592,7 +592,7 @@ EEP_D2_01_TELEGRAMS: dict[int, EEPTelegram] = {
 # ---------------------------------------------------------------------------
 
 
-def _encode_set_output(action: SetSwitchOutputAction) -> EEPMessage:
+def _encode_set_output(action: SetSwitchOutput) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=0x01, description=_EEP_D2_01_Commands[0x1].name),
@@ -605,7 +605,7 @@ def _encode_set_output(action: SetSwitchOutputAction) -> EEPMessage:
     return msg
 
 
-def _encode_query_status(action: QueryActuatorStatusAction) -> EEPMessage:
+def _encode_query_status(action: QueryActuatorStatus) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=0x03, description=_EEP_D2_01_Commands[0x3].name),
@@ -614,7 +614,7 @@ def _encode_query_status(action: QueryActuatorStatusAction) -> EEPMessage:
     return msg
 
 
-def _encode_query_measurement(action: QueryActuatorMeasurementAction) -> EEPMessage:
+def _encode_query_measurement(action: QueryActuatorMeasurement) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=0x06, description=_EEP_D2_01_Commands[0x6].name),
@@ -627,9 +627,9 @@ def _encode_query_measurement(action: QueryActuatorMeasurementAction) -> EEPMess
 
 
 _COMMAND_ENCODERS = {
-    ActionUID.SET_SWITCH_OUTPUT: _encode_set_output,
-    ActionUID.QUERY_ACTUATOR_STATUS: _encode_query_status,
-    ActionUID.QUERY_ACTUATOR_MEASUREMENT: _encode_query_measurement,
+    Action.SET_SWITCH_OUTPUT: _encode_set_output,
+    Action.QUERY_ACTUATOR_STATUS: _encode_query_status,
+    Action.QUERY_ACTUATOR_MEASUREMENT: _encode_query_measurement,
 }
 
 
@@ -679,13 +679,13 @@ def _resolve_power(values: dict[str, EEPMessageValue]) -> EEPMessageValue | None
 
 
 _BASE_RESOLVERS = {
-    ObservableUID.SWITCH_STATE: _resolve_switch_state,
-    ObservableUID.ENERGY: _resolve_energy,
-    ObservableUID.POWER: _resolve_power,
+    Observable.SWITCH_STATE: _resolve_switch_state,
+    Observable.ENERGY: _resolve_energy,
+    Observable.POWER: _resolve_power,
 }
 _DIMMER_RESOLVERS = {
     **_BASE_RESOLVERS,
-    ObservableUID.OUTPUT_VALUE: _resolve_output_value,
+    Observable.OUTPUT_VALUE: _resolve_output_value,
 }
 
 _sc = ScalarCapability  # local alias to keep factory lines short
@@ -698,33 +698,33 @@ def _factories(dimming: bool) -> list:
         lambda addr, cb: _sc(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.SWITCH_STATE,
+            observable=Observable.SWITCH_STATE,
             channel_field_id="I/O",
             channel_not_applicable=0x1E,
         ),
         lambda addr, cb: _sc(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.ERROR_LEVEL,
+            observable=Observable.ERROR_LEVEL,
             channel_field_id="I/O",
             channel_not_applicable=0x1E,
         ),
         lambda addr, cb: _sc(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.PILOT_WIRE_MODE,
+            observable=Observable.PILOT_WIRE_MODE,
         ),
         lambda addr, cb: _sc(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.ENERGY,
+            observable=Observable.ENERGY,
             channel_field_id="I/O",
             channel_not_applicable=0x1E,
         ),
         lambda addr, cb: _sc(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.POWER,
+            observable=Observable.POWER,
             channel_field_id="I/O",
             channel_not_applicable=0x1E,
         ),
@@ -734,7 +734,7 @@ def _factories(dimming: bool) -> list:
             lambda addr, cb: _sc(
                 device_address=addr,
                 on_state_change=cb,
-                observable_uid=ObservableUID.OUTPUT_VALUE,
+                observable=Observable.OUTPUT_VALUE,
                 channel_field_id="I/O",
                 channel_not_applicable=0x1E,
             )

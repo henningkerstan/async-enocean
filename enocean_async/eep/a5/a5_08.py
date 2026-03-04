@@ -1,6 +1,6 @@
 """A5-08-XX: Light, temperature and occupancy sensors."""
 
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
 from ..id import EEP
 from ..manufacturer import Manufacturer
@@ -10,27 +10,27 @@ _FULL_FACTORIES = [
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.VOLTAGE,
+        observable=Observable.VOLTAGE,
     ),
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.ILLUMINATION,
+        observable=Observable.ILLUMINATION,
     ),
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.TEMPERATURE,
+        observable=Observable.TEMPERATURE,
     ),
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.MOTION,
+        observable=Observable.MOTION,
     ),
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.OCCUPANCY_BUTTON,
+        observable=Observable.OCCUPANCY_BUTTON,
     ),
 ]
 
@@ -38,17 +38,17 @@ _ELTAKO_FACTORIES = [
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.VOLTAGE,
+        observable=Observable.VOLTAGE,
     ),
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.ILLUMINATION,
+        observable=Observable.ILLUMINATION,
     ),
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.MOTION,
+        observable=Observable.MOTION,
     ),
 ]
 
@@ -67,7 +67,7 @@ class _EEP_A5_08(SimpleProfileSpecification):
                     scale_min_fn=lambda _: 0.0,
                     scale_max_fn=lambda _: 5.1,
                     unit_fn=lambda _: "V",
-                    observable_uid=ObservableUID.VOLTAGE,
+                    observable=Observable.VOLTAGE,
                 ),
                 EEPDataField(
                     id="ILL",
@@ -77,7 +77,7 @@ class _EEP_A5_08(SimpleProfileSpecification):
                     scale_min_fn=lambda _: 0,
                     scale_max_fn=lambda _: ill_max,
                     unit_fn=lambda _: "lx",
-                    observable_uid=ObservableUID.ILLUMINATION,
+                    observable=Observable.ILLUMINATION,
                 ),
                 EEPDataField(
                     id="TMP",
@@ -87,7 +87,7 @@ class _EEP_A5_08(SimpleProfileSpecification):
                     scale_min_fn=lambda _: temp_min,
                     scale_max_fn=lambda _: temp_max,
                     unit_fn=lambda _: "°C",
-                    observable_uid=ObservableUID.TEMPERATURE,
+                    observable=Observable.TEMPERATURE,
                 ),
                 EEPDataField(
                     id="PIRS",
@@ -98,7 +98,7 @@ class _EEP_A5_08(SimpleProfileSpecification):
                         0: "motion",
                         1: "no motion",
                     },
-                    observable_uid=ObservableUID.MOTION,
+                    observable=Observable.MOTION,
                 ),
                 EEPDataField(
                     id="OCC",
@@ -109,7 +109,7 @@ class _EEP_A5_08(SimpleProfileSpecification):
                         0: "pressed",
                         1: "released",
                     },
-                    observable_uid=ObservableUID.OCCUPANCY_BUTTON,
+                    observable=Observable.OCCUPANCY_BUTTON,
                 ),
             ],
             capability_factories=_FULL_FACTORIES,
@@ -132,7 +132,7 @@ EEP_A5_08_01_ELTAKO = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0.0,
             scale_max_fn=lambda _: 5.1,
             unit_fn=lambda _: "V",
-            observable_uid=ObservableUID.VOLTAGE,
+            observable=Observable.VOLTAGE,
         ),
         EEPDataField(
             id="ILL",
@@ -142,7 +142,7 @@ EEP_A5_08_01_ELTAKO = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0,
             scale_max_fn=lambda _: 510,
             unit_fn=lambda _: "lx",
-            observable_uid=ObservableUID.ILLUMINATION,
+            observable=Observable.ILLUMINATION,
         ),
         EEPDataField(
             id="PIRS",
@@ -153,7 +153,7 @@ EEP_A5_08_01_ELTAKO = SimpleProfileSpecification(
                 0x0D: "motion",
                 0x0F: "no motion",
             },
-            observable_uid=ObservableUID.MOTION,
+            observable=Observable.MOTION,
         ),
     ],
     capability_factories=_ELTAKO_FACTORIES,

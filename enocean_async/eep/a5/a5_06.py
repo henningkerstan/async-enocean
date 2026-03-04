@@ -1,6 +1,6 @@
 """A5-06-XX: Light sensors."""
 
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
 from ..id import EEP
 from ..manufacturer import Manufacturer
@@ -39,7 +39,7 @@ _ILL_FACTORY = [
     lambda addr, cb: ScalarCapability(
         device_address=addr,
         on_state_change=cb,
-        observable_uid=ObservableUID.ILLUMINATION,
+        observable=Observable.ILLUMINATION,
     ),
 ]
 
@@ -95,9 +95,7 @@ class _EEP_A5_06(SimpleProfileSpecification):
                     },
                 ),
             ],
-            semantic_resolvers={
-                ObservableUID.ILLUMINATION: _a5_06_illumination_resolver
-            },
+            semantic_resolvers={Observable.ILLUMINATION: _a5_06_illumination_resolver},
             capability_factories=_ILL_FACTORY,
         )
 
@@ -134,7 +132,7 @@ EEP_A5_06_03 = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0.0,
             scale_max_fn=lambda _: 1000.0,
             unit_fn=lambda _: "lx",
-            observable_uid=ObservableUID.ILLUMINATION,
+            observable=Observable.ILLUMINATION,
         ),
     ],
     capability_factories=_ILL_FACTORY,
@@ -152,7 +150,7 @@ EEP_A5_06_04 = SimpleProfileSpecification(
             scale_min_fn=lambda _: -20.0,
             scale_max_fn=lambda _: 60.0,
             unit_fn=lambda _: "°C",
-            observable_uid=ObservableUID.TEMPERATURE,
+            observable=Observable.TEMPERATURE,
         ),
         EEPDataField(
             id="ILL",
@@ -162,7 +160,7 @@ EEP_A5_06_04 = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0.0,
             scale_max_fn=lambda _: 65535.0,
             unit_fn=lambda _: "lx",
-            observable_uid=ObservableUID.ILLUMINATION,
+            observable=Observable.ILLUMINATION,
         ),
         EEPDataField(
             id="SV",
@@ -198,12 +196,12 @@ EEP_A5_06_04 = SimpleProfileSpecification(
         lambda addr, cb: ScalarCapability(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.ILLUMINATION,
+            observable=Observable.ILLUMINATION,
         ),
         lambda addr, cb: ScalarCapability(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.TEMPERATURE,
+            observable=Observable.TEMPERATURE,
         ),
     ],
 )
@@ -231,9 +229,7 @@ EEP_A5_06_01_ELTAKO = SimpleProfileSpecification(
             unit_fn=lambda _: "lx",
         ),
     ],
-    semantic_resolvers={
-        ObservableUID.ILLUMINATION: _a5_06_eltako_illumination_resolver
-    },
+    semantic_resolvers={Observable.ILLUMINATION: _a5_06_eltako_illumination_resolver},
     capability_factories=_ILL_FACTORY,
 )
 

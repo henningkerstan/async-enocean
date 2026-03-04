@@ -91,19 +91,19 @@ class EEPHandler:
                 raw=raw_value, value=value, unit=unit
             )
 
-        # Third pass: entity UID propagation — copy decoded values to semantic entity keys
+        # Third pass: entity observable propagation — copy decoded values to semantic entity keys
         for field in self.__eep.telegrams[cmd_value].datafields:
-            if field.observable_uid is not None and field.id in msg.values:
+            if field.observable is not None and field.id in msg.values:
                 field_value = msg.values[field.id]
-                msg.entities[field.observable_uid] = EntityValue(
+                msg.entities[field.observable] = EntityValue(
                     value=field_value.value, unit=field_value.unit
                 )
 
         # Fourth pass: semantic resolvers — combine multiple fields into a single entity value
-        for observable_uid, resolver in self.__eep.semantic_resolvers.items():
+        for observable, resolver in self.__eep.semantic_resolvers.items():
             result = resolver(msg.values)
             if result is not None:
-                msg.entities[observable_uid] = EntityValue(
+                msg.entities[observable] = EntityValue(
                     value=result.value, unit=result.unit
                 )
 

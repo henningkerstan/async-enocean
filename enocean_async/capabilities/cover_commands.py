@@ -1,20 +1,20 @@
-"""Typed actions for cover / blind control (D2-05-00)."""
+"""Typed commands for cover / blind control (D2-05-00)."""
 
 from dataclasses import dataclass
 from typing import ClassVar
 
 from .action import Action
-from .action_uid import ActionUID
+from .command import Command
 
 
 @dataclass
-class SetCoverPositionAction(Action):
+class SetCoverPosition(Command):
     """Move a cover to a specific vertical position and rotation angle.
 
     Both ``position`` and ``angle`` are raw EEP values (0–127, where 127 = 100%).
     """
 
-    action_uid: ClassVar[str] = ActionUID.SET_COVER_POSITION
+    action: ClassVar[Action] = Action.SET_COVER_POSITION
 
     position: int
     """Vertical position: 0–127 (maps to 0–100 %)."""
@@ -33,20 +33,20 @@ class SetCoverPositionAction(Action):
 
 
 @dataclass
-class StopCoverAction(Action):
+class StopCover(Command):
     """Stop cover movement immediately."""
 
-    action_uid: ClassVar[str] = ActionUID.STOP_COVER
+    action: ClassVar[Action] = Action.STOP_COVER
 
     channel: int = 15
     """CHN field: 0–3 for a specific channel, 15 = all channels."""
 
 
 @dataclass
-class QueryCoverPositionAction(Action):
+class QueryCoverPosition(Command):
     """Request the current position and angle from a cover actuator."""
 
-    action_uid: ClassVar[str] = ActionUID.QUERY_COVER_POSITION
+    action: ClassVar[Action] = Action.QUERY_COVER_POSITION
 
     channel: int = 15
     """CHN field: 0–3 for a specific channel, 15 = all channels."""

@@ -4,6 +4,7 @@ from time import time
 from typing import Callable
 
 from ..address import SenderAddress
+from .observable import Observable
 
 type StateChangeCallback = Callable[[StateChange], None]
 
@@ -18,7 +19,7 @@ class StateChange:
     """A semantic update emitted by a Capability."""
 
     device_address: SenderAddress
-    observable_uid: str
+    observable: Observable
     value: any
     unit: str | None = None
     channel: int | None = None

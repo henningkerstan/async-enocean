@@ -1,7 +1,9 @@
-"""Stable semantic observable UID constants shared across capabilities and EEP definitions."""
+"""Stable semantic observable constants shared across capabilities and EEP definitions."""
+
+from enum import StrEnum
 
 
-class ObservableUID:
+class Observable(StrEnum):
     """Stable names for observable quantities exposed by devices.
 
     These are the canonical identifiers for things you can observe from a device —

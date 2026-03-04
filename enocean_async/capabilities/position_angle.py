@@ -5,7 +5,7 @@ from time import time
 
 from ..eep.message import EEPMessage
 from .capability import Capability
-from .observable_uids import ObservableUID
+from .observable import Observable
 from .state_change import StateChange, StateChangeSource
 
 # Watchdog timeout in seconds to detect when cover movement has stopped
@@ -36,8 +36,8 @@ class CoverCapability(Capability):
 
         current_time = time()
 
-        pos_entity = message.entities.get(ObservableUID.POSITION)
-        ang_entity = message.entities.get(ObservableUID.ANGLE)
+        pos_entity = message.entities.get(Observable.POSITION)
+        ang_entity = message.entities.get(Observable.ANGLE)
 
         pos_value = pos_entity.value if pos_entity else None
         ang_value = ang_entity.value if ang_entity else None
@@ -46,7 +46,7 @@ class CoverCapability(Capability):
             self._emit(
                 StateChange(
                     device_address=self.device_address,
-                    observable_uid=ObservableUID.POSITION,
+                    observable=Observable.POSITION,
                     value=pos_value,
                     timestamp=current_time,
                     source=StateChangeSource.TELEGRAM,
@@ -59,7 +59,7 @@ class CoverCapability(Capability):
                 self._emit(
                     StateChange(
                         device_address=self.device_address,
-                        observable_uid=ObservableUID.COVER_STATE,
+                        observable=Observable.COVER_STATE,
                         value=cover_state,
                         timestamp=current_time,
                         source=StateChangeSource.TELEGRAM,
@@ -84,7 +84,7 @@ class CoverCapability(Capability):
             self._emit(
                 StateChange(
                     device_address=self.device_address,
-                    observable_uid=ObservableUID.ANGLE,
+                    observable=Observable.ANGLE,
                     value=ang_value,
                     timestamp=current_time,
                     source=StateChangeSource.TELEGRAM,
@@ -105,7 +105,7 @@ class CoverCapability(Capability):
             self._emit(
                 StateChange(
                     device_address=self.device_address,
-                    observable_uid=ObservableUID.COVER_STATE,
+                    observable=Observable.COVER_STATE,
                     value="stopped",
                     timestamp=time(),
                     source=StateChangeSource.TIMER,

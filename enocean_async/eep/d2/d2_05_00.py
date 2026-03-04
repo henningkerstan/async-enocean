@@ -1,12 +1,12 @@
 """D2-05-00: Blinds control for position and angle, type 0x00."""
 
-from ...capabilities.action_uid import ActionUID
-from ...capabilities.cover_actions import (
-    QueryCoverPositionAction,
-    SetCoverPositionAction,
-    StopCoverAction,
+from ...capabilities.action import Action
+from ...capabilities.cover_commands import (
+    QueryCoverPosition,
+    SetCoverPosition,
+    StopCover,
 )
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.position_angle import CoverCapability
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
@@ -33,7 +33,7 @@ _CMD_AT_OFFSET4 = EEPDataField(
 )
 
 
-def _encode_set_position(action: SetCoverPositionAction) -> EEPMessage:
+def _encode_set_position(action: SetCoverPosition) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=1, description="Go to position and angle"),
@@ -48,7 +48,7 @@ def _encode_set_position(action: SetCoverPositionAction) -> EEPMessage:
     return msg
 
 
-def _encode_stop(action: StopCoverAction) -> EEPMessage:
+def _encode_stop(action: StopCover) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=2, description="Stop"),
@@ -57,7 +57,7 @@ def _encode_stop(action: StopCoverAction) -> EEPMessage:
     return msg
 
 
-def _encode_query_position(action: QueryCoverPositionAction) -> EEPMessage:
+def _encode_query_position(action: QueryCoverPosition) -> EEPMessage:
     msg = EEPMessage(
         sender=None,
         message_type=EEPMessageType(id=3, description="Query position and angle"),
@@ -83,7 +83,7 @@ EEP_D2_05_00 = EEPSpecification(
                     range_min=0,
                     range_max=127,
                     unit_fn=lambda _: "%",
-                    observable_uid=ObservableUID.POSITION,
+                    observable=Observable.POSITION,
                 ),
                 EEPDataField(
                     id="ANG",
@@ -93,7 +93,7 @@ EEP_D2_05_00 = EEPSpecification(
                     range_min=0,
                     range_max=127,
                     unit_fn=lambda _: "%",
-                    observable_uid=ObservableUID.ANGLE,
+                    observable=Observable.ANGLE,
                 ),
                 EEPDataField(
                     id="REPO",
@@ -190,7 +190,7 @@ EEP_D2_05_00 = EEPSpecification(
                     offset=1,
                     size=7,
                     unit_fn=lambda _: "%",
-                    observable_uid=ObservableUID.POSITION,
+                    observable=Observable.POSITION,
                 ),
                 EEPDataField(
                     id="ANG",
@@ -198,7 +198,7 @@ EEP_D2_05_00 = EEPSpecification(
                     offset=9,
                     size=7,
                     unit_fn=lambda _: "%",
-                    observable_uid=ObservableUID.ANGLE,
+                    observable=Observable.ANGLE,
                 ),
                 EEPDataField(
                     id="LOCK",
@@ -239,8 +239,8 @@ EEP_D2_05_00 = EEPSpecification(
         ),
     ],
     command_encoders={
-        ActionUID.SET_COVER_POSITION: _encode_set_position,
-        ActionUID.STOP_COVER: _encode_stop,
-        ActionUID.QUERY_COVER_POSITION: _encode_query_position,
+        Action.SET_COVER_POSITION: _encode_set_position,
+        Action.STOP_COVER: _encode_stop,
+        Action.QUERY_COVER_POSITION: _encode_query_position,
     },
 )

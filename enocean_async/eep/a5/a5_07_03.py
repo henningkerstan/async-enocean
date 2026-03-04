@@ -1,6 +1,6 @@
 """A5-07-03: Occupancy with supply voltage monitor and 10-bit illumination measurement."""
 
-from ...capabilities.observable_uids import ObservableUID
+from ...capabilities.observable import Observable
 from ...capabilities.scalar import ScalarCapability
 from ..id import EEP
 from ..profile import EEPDataField, SimpleProfileSpecification
@@ -19,7 +19,7 @@ EEP_A5_07_03 = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0.0,
             scale_max_fn=lambda _: 5.0,
             unit_fn=lambda _: "V",
-            observable_uid=ObservableUID.VOLTAGE,
+            observable=Observable.VOLTAGE,
         ),
         EEPDataField(
             id="ILL",
@@ -31,7 +31,7 @@ EEP_A5_07_03 = SimpleProfileSpecification(
             scale_min_fn=lambda _: 0.0,
             scale_max_fn=lambda _: 1000.0,
             unit_fn=lambda _: "lx",
-            observable_uid=ObservableUID.ILLUMINATION,
+            observable=Observable.ILLUMINATION,
         ),
         EEPDataField(
             id="PIR",
@@ -42,24 +42,24 @@ EEP_A5_07_03 = SimpleProfileSpecification(
                 0: "Uncertain of occupancy status",
                 1: "Motion detected",
             },
-            observable_uid=ObservableUID.MOTION,
+            observable=Observable.MOTION,
         ),
     ],
     capability_factories=[
         lambda addr, cb: ScalarCapability(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.VOLTAGE,
+            observable=Observable.VOLTAGE,
         ),
         lambda addr, cb: ScalarCapability(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.ILLUMINATION,
+            observable=Observable.ILLUMINATION,
         ),
         lambda addr, cb: ScalarCapability(
             device_address=addr,
             on_state_change=cb,
-            observable_uid=ObservableUID.MOTION,
+            observable=Observable.MOTION,
         ),
     ],
 )
