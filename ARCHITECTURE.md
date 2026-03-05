@@ -6,104 +6,219 @@
 
 `enocean-async` is an asyncio-based Python library for communicating with EnOcean devices over an EnOcean USB gateway. The library has two symmetric pipelines:
 
-- **Observable pipeline** (receive): raw radio telegrams → typed `StateChange` objects carrying values like `temperature=21.3 °C` or `position=75`.
-- **Action pipeline** (send): high-level commands → encoded `ERP1Telegram` → radio signal.
+- **Observable pipeline** (receive): raw radio telegrams → typed `EntityStateChange` objects carrying entity state updates like `entity_id="temperature", values={TEMPERATURE: 21.3}`.
+- **Action pipeline** (send): typed `Command` subclasses carrying `entity_id` and action-specific parameters → encoded `ERP1Telegram` → radio signal, e.g. `SetCoverPosition(entity_id="cover", position=64)` or `StopCover(entity_id="cover")`.
 
 Each pipeline layers protocol detail away from the application. The gateway orchestrates both.
 
 ---
 
-## Observables and Actions
+## Entities, Observables, and Actions
 
-These two concepts form the semantic vocabulary of the library.
+These three concepts form the semantic vocabulary of the library.
+
+### Entities
+
+An **entity** is a physical real-world thing within a device — a push button, a cover motor, a relay channel, a temperature sensor. It is the primary unit of identity in the library.
+
+Entities are declared statically in the EEP specification, since the EEP fully defines what physical sub-units a device has. Each entity has:
+
+- A stable string **id** within the device (e.g. `"a0"` for a rocker button, `"cover"` for a cover motor, `"0"` for relay channel 0, `"temperature"` for a temperature sensor).
+- A set of **observables** — the quantities this entity reports.
+- A list of **actions** — the commands this entity accepts.
+
+```python
+@dataclass(frozen=True)
+class Entity:
+    id: str
+    observables: frozenset[Observable]
+    actions: frozenset[Action] = field(default_factory=frozenset)
+```
+
+Examples as declared in EEP files:
+
+```python
+# F6-02: four single-rocker entities + four combined-rocker entities
+# Combined presses are distinct telegram types (SA=1 flag), not timing coincidences.
+Entity(id="a0",   observables=frozenset({PUSH_BUTTON}))  # rocker A, down
+Entity(id="b0",   observables=frozenset({PUSH_BUTTON}))  # rocker B, down
+Entity(id="a1",   observables=frozenset({PUSH_BUTTON}))  # rocker A, up
+Entity(id="b1",   observables=frozenset({PUSH_BUTTON}))  # rocker B, up
+Entity(id="ab0",  observables=frozenset({PUSH_BUTTON}))  # A-down + B-down simultaneously
+Entity(id="ab1",  observables=frozenset({PUSH_BUTTON}))  # A-up   + B-up   simultaneously
+Entity(id="a0b1", observables=frozenset({PUSH_BUTTON}))  # A-down + B-up   simultaneously
+Entity(id="a1b0", observables=frozenset({PUSH_BUTTON}))  # A-up   + B-down simultaneously
+
+# A5-04: two independent sensor entities (separate concerns)
+Entity(id="temperature", observables=frozenset({TEMPERATURE}))
+Entity(id="humidity",    observables=frozenset({HUMIDITY}))
+
+# D2-05: one cover entity, multiple observables (all describe the same physical thing)
+Entity(
+    id="cover",
+    observables=frozenset({COVER_STATE, POSITION, ANGLE}),
+    actions=frozenset({SET_COVER_POSITION, STOP_COVER, QUERY_COVER_POSITION}),
+)
+
+# D2-01-00: one relay channel (each D2-01 variant declares its exact channel count)
+Entity(
+    id="0",
+    observables=frozenset({SWITCH_STATE, ERROR_LEVEL, POWER, ENERGY}),
+    actions=frozenset({SET_SWITCH_OUTPUT, QUERY_ACTUATOR_STATUS, QUERY_ACTUATOR_MEASUREMENT}),
+)
+```
+
+The principle for grouping observables into entities: multiple observables belong to the same entity when they describe the **same physical thing** and are not independently meaningful (cover POSITION, ANGLE, COVER_STATE are all facets of one cover motor). Observables belong to separate entities when they are independently meaningful and have separate real-world identities (temperature and humidity are separate sensors on the same chip, but distinct physical quantities).
+
+A fully unique physical thing in the system is the pair `(device_address, entity_id)`.
 
 ### Observables
 
-An **observable** is any quantity a device exposes that can be watched over time — whether the device is a pure sensor (temperature, illumination) or an actuator reporting its own state (cover position, window handle state). The gateway side always _observes_: it receives a telegram, decodes it, and emits an updated value. The physical nature of the device (sensor vs. actuator) is irrelevant to this abstraction.
+An **observable** is a quantity that an entity reports. It has two intrinsic properties:
 
-Observables are classified by `Observable` enum members (`capabilities/observable.py`):
+- A **unique id** — what it is observing (e.g. `"temperature"`, `"switch_state"`, `"push_button"`).
+- A **native unit** — the one canonical physical unit for that quantity (`None` for dimensionless or categorical values).
 
 ```python
-class Observable(StrEnum):
-    TEMPERATURE   = "temperature"
-    ILLUMINATION  = "illumination"
-    POSITION      = "position"
-    COVER_STATE   = "cover_state"
-    WINDOW_STATE  = "window_state"
+class Observable(str, Enum):
+    def __new__(cls, id: str, unit: str | None = None):
+        obj = str.__new__(cls, id)
+        obj._value_ = id
+        obj.unit = unit
+        return obj
+
+    TEMPERATURE   = ("temperature",   "°C")
+    HUMIDITY      = ("humidity",      "%")
+    ILLUMINATION  = ("illumination",  "lx")
+    POWER         = ("power",         "W")
+    ENERGY        = ("energy",        "Wh")
+    SWITCH_STATE  = ("switch_state",  None)
+    PUSH_BUTTON   = ("push_button",   None)
+    POSITION      = ("position",      "%")
+    COVER_STATE   = ("cover_state",   None)
     ...
 ```
 
-`StrEnum` makes each member both an `Observable` instance and a plain `str`, so they work as dict keys and in equality comparisons with string literals while being fully type-safe.
+The `str, Enum` pattern makes each member both an `Observable` instance and a plain `str`, preserving dict-key and equality semantics. The unit is fixed per observable type — if two quantities differ in unit, they are different observables (e.g. `POWER = "W"` and `ENERGY = "Wh"` are separate members).
 
-An observable update is delivered as a `StateChange`:
+Observable names are **semantic, not unit-encoding**. The name says *what* is being observed (`TEMPERATURE`, `POWER`), not *how* it is expressed. The unit is available as `Observable.TEMPERATURE.unit` — encoding it redundantly in the identifier (`TEMPERATURE_CELSIUS`, `POWER_WATTS`) would conflate two distinct properties and produce unnecessarily verbose names. The only reason to distinguish by unit in the name would be if the same physical concept existed in two units simultaneously — which cannot happen here since units are canonical and fixed.
 
-```python
-@dataclass
-class StateChange:
-    device_address: SenderAddress   # which device
-    observable: Observable          # which observable
-    value: Any                      # the new value
-    unit: str | None                # physical unit, if applicable
-    channel: int | None             # output channel (0-based); None for single-channel or "all channels"
-    timestamp: float                # wall-clock time
-    source: StateChangeSource       # TELEGRAM or TIMER
-```
+An observable update is delivered as part of an `EntityStateChange` (see below).
 
-A fully unique observable identity is the triple `(device_address, observable, channel)`. The `Observable` constant is a _type_ classifier, not a unique ID — a 4-channel switch exposes four distinct `SWITCH_STATE` observables that differ only in `channel`.
+### Actions
 
-### Actions and Commands
-
-An **action** is a category of command sent _to_ a device — telling a cover to move, a dimmer to change brightness, a fan to change speed. Actions are classified by `Action` enum members (`capabilities/action.py`):
+An **action** is a category of command sent _to_ a device — telling a cover to move, a relay to switch, a dimmer to change brightness. Actions are classified by `Action` enum members (`capabilities/action.py`):
 
 ```python
 class Action(StrEnum):
-    SET_COVER_POSITION       = "set_cover_position"    # D2-05-00: position + angle
-    STOP_COVER               = "stop_cover"            # D2-05-00
-    QUERY_COVER_POSITION     = "query_cover_position"  # D2-05-00
-    DIM                      = "dim"                   # A5-38-08
-    SET_FAN_SPEED            = "set_fan_speed"         # D2-20-02
-    SET_SWITCH_OUTPUT        = "set_switch_output"     # D2-01
-    QUERY_ACTUATOR_STATUS    = "query_actuator_status" # D2-01
-    QUERY_ACTUATOR_MEASUREMENT = "query_actuator_measurement"  # D2-01
+    SET_COVER_POSITION         = "set_cover_position"
+    STOP_COVER                 = "stop_cover"
+    QUERY_COVER_POSITION       = "query_cover_position"
+    DIM                        = "dim"
+    SET_FAN_SPEED              = "set_fan_speed"
+    SET_SWITCH_OUTPUT          = "set_switch_output"
+    QUERY_ACTUATOR_STATUS      = "query_actuator_status"
+    QUERY_ACTUATOR_MEASUREMENT = "query_actuator_measurement"
 ```
 
-A concrete command is represented as a typed `Command` subclass (`capabilities/command.py`):
+`Action` names things you _send_. `Observable` names things you _receive_. They are separate classifiers: `STOP_COVER` is an action with no direct observable counterpart; `SET_COVER_POSITION` is an action that will eventually produce `POSITION` and `COVER_STATE` updates as the device reports back. The formal link between an action and the observables it affects is declared on the `Entity` — both `observables` and `actions` live together on the entity they belong to.
+
+---
+
+## EntityStateChange
+
+When a capability processes a telegram and produces an update, it emits an `EntityStateChange`:
+
+```python
+@dataclass
+class EntityStateChange:
+    device_address: SenderAddress   # which device
+    entity_id: str                  # which entity within the device
+    values: dict[Observable, Any]   # all observable values reported in this telegram
+    timestamp: float                # wall-clock time
+    time_elapsed: float             # duration since last related event (e.g. hold duration)
+    source: StateChangeSource       # TELEGRAM or TIMER
+```
+
+The complete entity identity is the pair `(device_address, entity_id)`; the `entity_id` is only sufficient within the scope of a device. The `values` dict may be a partial update — a telegram may only carry a subset of an entity's observables (e.g. a D2-01 measurement response carries `POWER` but not `SWITCH_STATE`). The unit for any value is always `observable.unit`.
+
+Examples:
+
+```python
+# Cover — all three observables arrive in one telegram
+EntityStateChange(entity_id="cover", values={POSITION: 75, COVER_STATE: "open", ANGLE: 0})
+
+# Push button — single observable entity, timer-sourced hold event
+EntityStateChange(entity_id="a0", values={PUSH_BUTTON: "hold"}, source=StateChangeSource.TIMER)
+
+# D2-01 actuator status — partial update
+EntityStateChange(entity_id="0", values={SWITCH_STATE: "on", ERROR_LEVEL: 0})
+```
+
+---
+
+## Command
+
+A command sent to a device is represented as a typed `Command` subclass:
 
 ```python
 @dataclass
 class Command:
-    """Base class. Subclasses declare action: ClassVar[Action] and typed fields."""
+    entity_id: str   # which entity within the device to target
+    action: Action   # what to do
+
+@dataclass
+class SetSwitchOutput(Command):
+    state: str       # "on" / "off"
 
 @dataclass
 class SetCoverPosition(Command):
-    action: ClassVar[Action] = Action.SET_COVER_POSITION
-    position: int            # 0–127 (maps to 0–100%)
+    position: int    # 0–127 (maps to 0–100%)
     angle: int = 0
-    repositioning_mode: int = 0
-    lock_mode: int = 0
-    channel: int = 15
 
 @dataclass
 class StopCover(Command):
-    action: ClassVar[Action] = Action.STOP_COVER
-    channel: int = 15
+    pass             # action IS the message; no parameters
+
+@dataclass
+class Dim(Command):
+    value: int
+    speed: int
 ```
 
-The gateway exposes the send pipeline via a single method:
+Command parameters are action-specific and typed — there is no generic values dict, because command parameters are not "things being observed." The `entity_id` targets the physical sub-unit; the typed fields provide action-specific inputs.
+
+The gateway send method:
 
 ```python
 await gateway.send_command(
-    destination=device_address,         # EURID | BaseAddress
-    command=SetCoverPosition(position=64, angle=0),
-    sender=None,                        # optional; defaults to device.sender or base_id
+    destination=device_address,
+    command=SetCoverPosition(entity_id="cover", position=64, angle=0),
 )
 ```
 
-### Relationship between actions and observables
+---
 
-`Action` names things you _send_. `Observable` names things you _receive_. They are intentionally separate: `STOP_COVER` is an action that has no direct observable counterpart; `SET_COVER_POSITION` is an action that will eventually produce `POSITION` and `COVER_STATE` observable updates as the cover reports back its state.
+## DeviceDescriptor
 
-The library **does not enforce** a formal link between an action and the observables it affects — this mapping is device-dependent, bidirectionality is EEP-specific, and enforcing it would add significant complexity for little benefit at the library level. Application code (e.g., a Home Assistant integration) is the right place to model the full bidirectional entity.
+`DeviceDescriptor` is the setup-time description of what a device type exposes and accepts. It is returned by `Gateway.device_descriptor(address)` after calling `add_device()`, before any telegrams arrive:
+
+```python
+@dataclass
+class DeviceDescriptor:
+    eep: EEP
+    entities: list[Entity]
+```
+
+`entities` always includes three metadata entities added by the gateway regardless of EEP:
+
+```python
+Entity(id="rssi",           observables=frozenset({RSSI}),           actions=[])
+Entity(id="last_seen",      observables=frozenset({LAST_SEEN}),      actions=[])
+Entity(id="telegram_count", observables=frozenset({TELEGRAM_COUNT}), actions=[])
+```
+
+An integration (e.g. Home Assistant) uses `DeviceDescriptor.entities` to create platform entities at setup time — without waiting for a single telegram.
 
 ---
 
@@ -124,16 +239,16 @@ ERP1Telegram      rorg, sender EURID, raw payload bits, rssi
     ▼
 EEPMessage
   .values    {field_id  → EEPMessageValue}   ← EEP spec vocabulary: "TMP", "ILL1", "R1"
-  .entities  {observable → EntityValue}      ← semantic vocabulary: "temperature", "illumination"
+  .entities  {observable → EntityValue}      ← semantic vocabulary: TEMPERATURE, ILLUMINATION
     │ Capability.decode()  (one call per capability in device.capabilities)
-    ├── ScalarCapability(observable=TEMPERATURE) → reads entities["temperature"]
-    ├── ScalarCapability(observable=ILLUMINATION) → reads entities["illumination"]
-    ├── CoverCapability → reads entities["position"]+entities["angle"], infers "cover_state"
+    ├── ScalarCapability(observable=TEMPERATURE) → reads entities[TEMPERATURE]
+    ├── ScalarCapability(observable=ILLUMINATION) → reads entities[ILLUMINATION]
+    ├── CoverCapability → reads entities[POSITION]+entities[ANGLE], infers COVER_STATE
     ├── PushButtonCapability → reads values["R1"], values["EB"], … (raw field access)
     └── MetaDataCapability → reads rssi, generates timestamps
     │ _emit()
     ▼
-StateChange(device_address, observable, value, unit, channel, timestamp, source)
+EntityStateChange(device_address, entity_id, values, timestamp, source)
     │ on_state_change callback
     ▼
 Application
@@ -156,9 +271,9 @@ Note: `EEPMessage.values` contains `EEPMessageValue` (raw int + decoded value + 
 
 ```
 Application
-    │ gateway.send_command(destination, SetCoverPosition(position=64))
+    │ gateway.send_command(destination, SetCoverPosition(entity_id="cover", position=64))
     ▼
-Command subclass instance (typed, with validated fields)
+Command subclass instance (typed, with entity_id and validated fields)
     │ EEPSpecification.command_encoders[command.action](command)
     ▼
 EEPMessage
@@ -178,8 +293,6 @@ ESP3Packet
     ▼
 Radio signal → Device
 ```
-
-The encoder in each EEP definition is a simple function that maps a `Command` subclass to an `EEPMessage` with `message_type.id` set and `values` filled with raw field values. Raw values are used throughout — no reverse scaling is needed for current commandable EEPs. The gateway sets `message.sender` and `message.destination` before calling `EEPHandler.encode()`.
 
 ---
 
@@ -202,31 +315,28 @@ Every supported EEP is a module-level `EEPSpecification` (or `SimpleProfileSpeci
 The two key types are:
 
 - **`EEP`** (`eep/id.py`): The 4-tuple identifier — `rorg`, `func`, `type_`, optional `manufacturer`. Used as the dict key in `EEP_SPECIFICATIONS` and as a reference in `EEPMessage.eep`.
-- **`EEPSpecification`** (`eep/profile.py`): The full profile — `cmd_size`, `cmd_offset`, `telegrams` dict, `semantic_resolvers`, `capability_factories`. The simpler `SimpleProfileSpecification` is a convenience subclass for single-telegram EEPs (no CMD field; wraps datafields into a single `EEPTelegram` at key `0`).
+- **`EEPSpecification`** (`eep/profile.py`): The full profile — `cmd_size`, `cmd_offset`, `telegrams` dict, `semantic_resolvers`, `capability_factories`, `entities`. The simpler `SimpleProfileSpecification` is a convenience subclass for single-telegram EEPs (no CMD field; wraps datafields into a single `EEPTelegram` at key `0`).
 
 `EEPDataField` is the atomic unit: bit offset, size, scale functions, unit function, enum map, and optional `observable` annotation that bridges the spec and semantic vocabularies.
 
-`EEPSpecification` carries four extension points: `telegrams`, `semantic_resolvers`, `capability_factories` (for the receive path), and `command_encoders` (for the send path).
-
-The last field in each `EEPTelegram.datafields` must cover the last meaningful bit of the telegram. This allows `EEPHandler.encode()` to compute the buffer size automatically as `ceil((max(f.offset + f.size for f in datafields) [+ cmd_size if CMD at end]) / 8)`.
+`EEPSpecification` carries five extension points: `telegrams`, `semantic_resolvers`, `capability_factories` (receive path behaviour), `command_encoders` (send path encoding), and `entities` (static declaration of physical entities).
 
 ### 3. Capability Layer
 
 **Files:** `capabilities/`
 
-Capabilities are the behavioural layer. Each subclass interprets a decoded `EEPMessage` for one specific observable and emits `StateChange` objects.
+Capabilities are the behavioural layer. Each subclass interprets a decoded `EEPMessage` for one specific entity and emits `EntityStateChange` objects.
 
-- **`ScalarCapability`** (`scalar.py`): Generic, parameterised by `observable`. Reads `message.entities[observable]` and emits a `StateChange`. Covers all plain scalar observables (temperature, illumination, motion, voltage, window state, …).
-- **`CoverCapability`** (`position_angle.py`): Stateful: it takes the received position and angle values, infers `cover_state` from successive position deltas, and runs an asyncio watchdog to emit `stopped` after 1.5 s of radio silence.
-- **`PushButtonCapability` / `F6_02_01_02PushButtonCapability`** (`push_button.py`): Stateful: decodes rocker switch bit patterns into button events (pushed, hold, click, double click, released) using timeouts.
-- **`MetaDataCapability`** (`metadata.py`): Emits RSSI, last-seen timestamp, and telegram count. Always prepended to a device's capability list by the gateway.
+- **`ScalarCapability`** (`scalar.py`): Generic, parameterised by `observable` and `entity_id`. Reads `message.entities[observable]` and emits an `EntityStateChange`. Covers all plain scalar observables (temperature, illumination, motion, voltage, window state, …).
+- **`CoverCapability`** (`position_angle.py`): Stateful: takes the received position and angle values, infers `cover_state` from successive position deltas, and runs an asyncio watchdog to emit `stopped` after 1.5 s of radio silence. Emits one `EntityStateChange` with `entity_id="cover"` and `values={POSITION: …, ANGLE: …, COVER_STATE: …}`.
+- **`PushButtonCapability` / `F6_02_01_02PushButtonCapability`** (`push_button.py`): Stateful: decodes rocker switch bit patterns into button events (pushed, hold, click, double click, released) using timeouts. Each button emits `EntityStateChange` with its own `entity_id` (`"a0"`, `"b0"`, …).
+- **`MetaDataCapability`** (`metadata.py`): Emits RSSI, last-seen timestamp, and telegram count as separate `EntityStateChange` objects. Always prepended to a device's capability list by the gateway.
 
 ### 4. Device Layer
 
 **Files:** `device/device.py`, `device/catalog.py`
 
 `Device` is a runtime object (created by `add_device()`) holding the device's address, EEP ID, name, and instantiated `Capability` list. Every incoming `EEPMessage` is forwarded to all capabilities.
-
 
 ### 5. Gateway Layer
 
@@ -238,7 +348,7 @@ Layered callbacks for application code:
 - `add_esp3_received_callback` — raw packet level
 - `add_erp1_received_callback` — parsed telegram (filterable by sender)
 - `add_eep_message_received_callback` — decoded EEP message (filterable by sender)
-- `add_state_change_callback` — semantic observable updates from capabilities
+- `add_state_change_callback` — semantic entity state updates from capabilities
 
 #### Auto-reconnect
 
@@ -250,30 +360,39 @@ When the serial connection is lost unexpectedly, the gateway automatically attem
 
 ### EEP definitions are self-describing
 
-`EEPSpecification.capability_factories` (receive) and `EEPSpecification.command_encoders` (send) mean the gateway contains zero EEP-specific logic. Adding a new EEP or a new commandable action never requires touching `gateway.py`.
+`EEPSpecification.entities` (physical entity model), `capability_factories` (receive behaviour), and `command_encoders` (send encoding) mean the gateway contains zero EEP-specific logic. Adding a new EEP or a new commandable action never requires touching `gateway.py`.
+
+### Entities are physical things, declared in the EEP
+
+Each EEP statically declares its `Entity` list. Entities are physical real-world sub-units (push buttons, relay channels, cover motors, sensor elements). The EEP fully specifies what entities exist — including their observable types and accepted actions — before any telegram arrives.
+
+This is possible because EnOcean EEP variants are fixed: `D2-01-00` has exactly one relay channel; `F6-02-01` has exactly four rocker buttons. Instance count is per-variant, not discovered at runtime.
+
+### Observable carries its native unit
+
+`Observable` is a `str, Enum` whose members carry a `unit: str | None` property. The unit is intrinsic to what is being observed: temperature is always in `°C`, illumination always in `lx`. If two quantities differ in unit, they are distinct `Observable` members. This eliminates all scattered `(Observable, str | None)` unit pairs that previously appeared in factory declarations, `DeviceDescriptor`, and `StateChange`.
+
+### EntityStateChange is entity-centric, not observable-centric
+
+A single telegram updates an entity's state. When a cover reports its position, angle, and state simultaneously, a single `EntityStateChange` with `values={POSITION: 75, ANGLE: 0, COVER_STATE: "open"}` is emitted — not three separate events. The consumer receives one coherent update per entity per telegram. Partial updates (when a telegram only carries some of an entity's observables) are naturally expressed as a `values` dict with fewer keys.
 
 ### Two-vocabulary `EEPMessage`
 
-`EEPMessage.values` holds the raw EEP field view (spec field IDs: `"TMP"`, `"ILL1"`), each as an `EEPMessageValue(raw, value, unit)`. `EEPMessage.entities` holds the semantic observable view (`Observable` enum members: `Observable.TEMPERATURE`, `Observable.ILLUMINATION`), each as a lighter `EntityValue(value, unit)` — the raw int is not needed at the semantic layer. Capabilities always read from `entities`, making them EEP-agnostic: `ScalarCapability(observable=Observable.TEMPERATURE)` works for A5-02, A5-04, A5-08, or any future temperature-bearing EEP without modification.
+`EEPMessage.values` holds the raw EEP field view (spec field IDs: `"TMP"`, `"ILL1"`), each as an `EEPMessageValue(raw, value, unit)`. `EEPMessage.entities` holds the semantic observable view (`Observable` enum members), each as a lighter `EntityValue(value, unit)` — the raw int is not needed at the semantic layer. Capabilities always read from `entities`, making them EEP-agnostic: `ScalarCapability(observable=TEMPERATURE)` works for A5-02, A5-04, A5-08, or any future temperature-bearing EEP without modification.
 
 ### Semantic resolvers bridge multi-field observables
 
 Some EEP profiles spread one observable across multiple fields (A5-06: two illumination ranges + a select bit). `SemanticResolver` callables live in the EEP definition module and run as pass 4 of the decoder. Capabilities remain oblivious to this complexity.
-
-### Observable and Action are decoupled classifiers
-
-`Observable` classifies things you _receive_. `Action` classifies things you _send_. They are intentionally separate namespaces: `Action.STOP_COVER` has no observable counterpart; `Action.SET_COVER_POSITION` affects `Observable.POSITION` and `Observable.COVER_STATE` — but only after the device responds.
-
-The full observable identity is the triple `(device_address, Observable, channel)`, not the `Observable` constant alone. This matters for multi-channel devices: a 4-channel switch has four distinct `SWITCH_STATE` observables.
 
 ---
 
 ## Adding a new EEP
 
 1. Create a module under `eep/<rorg>/` with an `EEPSpecification` or `SimpleProfileSpecification` instance.
-2. Annotate fields with `observable` where a 1:1 mapping to an observable exists. Add a `SemanticResolver` for multi-field combinations.
-3. Populate `capability_factories` with `ScalarCapability` lambdas (for plain scalars) or specialised capability constructors (for stateful logic).
-4. Optionally populate `command_encoders` if the device accepts commands. Add the corresponding `Command` subclass in `capabilities/<profile>_commands.py`.
-5. Register in `eep/__init__.py`'s `EEP_SPECIFICATIONS`.
+2. Declare `entities` — one `Entity` per physical entity, with its `observables` and `actions`.
+3. Annotate fields with `observable` where a 1:1 mapping to an observable exists. Add a `SemanticResolver` for multi-field combinations.
+4. Populate `capability_factories` with the appropriate factory callables (e.g. `scalar_factory`, `cover_factory`, `f6_push_button_factory`).
+5. Optionally populate `command_encoders` if the device accepts commands. Add the corresponding `Command` subclass in `capabilities/<profile>_commands.py`.
+6. Register in `eep/__init__.py`'s `EEP_SPECIFICATIONS`.
 
 No changes to `gateway.py`, `device/device.py`, or any capability class are required.

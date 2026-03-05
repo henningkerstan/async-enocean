@@ -1,11 +1,11 @@
 """Metadata capability providing RSSI and last_seen timestamp."""
 
-from datetime import datetime
 from time import time
 
 from ..eep.message import EEPMessage
 from .capability import Capability
-from .state_change import StateChange, StateChangeSource
+from .observable import Observable
+from .state_change import EntityStateChange, EntityStateChangeSource
 
 
 class MetaDataCapability(Capability):
@@ -30,33 +30,33 @@ class MetaDataCapability(Capability):
         # Emit RSSI if available
         if message.rssi is not None:
             self._emit(
-                StateChange(
-                    device_address=self.device_address,
-                    observable="rssi",
-                    value=message.rssi,
+                EntityStateChange(
+                    device_id=self.device_address,
+                    entity_id="rssi",
+                    values={Observable.RSSI: message.rssi},
                     timestamp=timestamp,
-                    source=StateChangeSource.TELEGRAM,
+                    source=EntityStateChangeSource.TELEGRAM,
                 )
             )
 
         # Always emit last_seen timestamp
         self._emit(
-            StateChange(
-                device_address=self.device_address,
-                observable="last_seen",
-                value=timestamp,
+            EntityStateChange(
+                device_id=self.device_address,
+                entity_id="last_seen",
+                values={Observable.LAST_SEEN: timestamp},
                 timestamp=timestamp,
-                source=StateChangeSource.TELEGRAM,
+                source=EntityStateChangeSource.TELEGRAM,
             )
         )
 
         # Always emit telegram count
         self._emit(
-            StateChange(
-                device_address=self.device_address,
-                observable="telegram_count",
-                value=self._telegram_count,
+            EntityStateChange(
+                device_id=self.device_address,
+                entity_id="telegram_count",
+                values={Observable.TELEGRAM_COUNT: self._telegram_count},
                 timestamp=timestamp,
-                source=StateChangeSource.TELEGRAM,
+                source=EntityStateChangeSource.TELEGRAM,
             )
         )

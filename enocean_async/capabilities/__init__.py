@@ -9,7 +9,11 @@ from .observable import Observable
 from .position_angle import CoverCapability
 from .push_button import F6_02_01_02PushButtonCapability, PushButtonCapability
 from .scalar import ScalarCapability
-from .state_change import StateChange, StateChangeCallback, StateChangeSource
+from .state_change import (
+    EntityStateChange,
+    EntityStateChangeCallback,
+    EntityStateChangeSource,
+)
 from .switch_commands import (
     QueryActuatorMeasurement,
     QueryActuatorStatus,
@@ -33,8 +37,8 @@ __all__ = [
     "SetCoverPosition",
     "SetFanSpeed",
     "SetSwitchOutput",
-    "StateChange",
-    "StateChangeCallback",
-    "StateChangeSource",
+    "EntityStateChange",
+    "EntityStateChangeCallback",
+    "EntityStateChangeSource",
     "StopCover",
 ]

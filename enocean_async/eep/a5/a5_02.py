@@ -1,9 +1,11 @@
 """A5-02-XX: Temperature sensors."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ..id import EEP
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
+
+_ENTITIES = [Entity(id="temperature", observables=frozenset({Observable.TEMPERATURE}))]
 
 
 class _EEP_A5_02(SimpleProfileSpecification):
@@ -30,13 +32,8 @@ class _EEP_A5_02(SimpleProfileSpecification):
                     observable=Observable.TEMPERATURE,
                 )
             ],
-            capability_factories=[
-                lambda addr, cb: ScalarCapability(
-                    device_address=addr,
-                    on_state_change=cb,
-                    observable=Observable.TEMPERATURE,
-                ),
-            ],
+            capability_factories=[scalar_factory(Observable.TEMPERATURE)],
+            entities=_ENTITIES,
         )
 
 

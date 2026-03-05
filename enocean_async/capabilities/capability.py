@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 from ..address import Address
-from .state_change import StateChange, StateChangeCallback
+from .state_change import EntityStateChange, EntityStateChangeCallback
 
 if TYPE_CHECKING:
     from ..eep.message import EEPMessage
@@ -18,7 +18,7 @@ class Capability(ABC):
     It is responsible for decoding EEP messages related to that functionality and emitting state changes accordingly."""
 
     device_address: Address
-    on_state_change: Optional[StateChangeCallback] = None
+    on_state_change: Optional[EntityStateChangeCallback] = None
 
     def decode(self, message: EEPMessage) -> None:
         """Decode the given EEPMessage according to this capability's logic.
@@ -35,7 +35,7 @@ class Capability(ABC):
         """Implementation of decode logic. Override in subclasses."""
         raise NotImplementedError("Subclasses must implement the _decode_impl method.")
 
-    def _emit(self, state_change: StateChange) -> None:
+    def _emit(self, state_change: EntityStateChange) -> None:
         """Emit a state change via callback, scheduled on the running event loop."""
         if self.on_state_change:
             asyncio.get_running_loop().call_soon(self.on_state_change, state_change)

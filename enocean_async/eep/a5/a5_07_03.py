@@ -1,9 +1,9 @@
 """A5-07-03: Occupancy with supply voltage monitor and 10-bit illumination measurement."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ..id import EEP
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 
 EEP_A5_07_03 = SimpleProfileSpecification(
     eep=EEP.from_string("A5-07-03"),
@@ -46,20 +46,13 @@ EEP_A5_07_03 = SimpleProfileSpecification(
         ),
     ],
     capability_factories=[
-        lambda addr, cb: ScalarCapability(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.VOLTAGE,
-        ),
-        lambda addr, cb: ScalarCapability(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.ILLUMINATION,
-        ),
-        lambda addr, cb: ScalarCapability(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.MOTION,
-        ),
+        scalar_factory(Observable.VOLTAGE, entity_id="supply_voltage"),
+        scalar_factory(Observable.ILLUMINATION),
+        scalar_factory(Observable.MOTION),
+    ],
+    entities=[
+        Entity(id="supply_voltage", observables=frozenset({Observable.VOLTAGE})),
+        Entity(id="illumination", observables=frozenset({Observable.ILLUMINATION})),
+        Entity(id="motion", observables=frozenset({Observable.MOTION})),
     ],
 )

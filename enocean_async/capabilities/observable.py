@@ -1,54 +1,65 @@
 """Stable semantic observable constants shared across capabilities and EEP definitions."""
 
-from enum import StrEnum
+from enum import Enum
 
 
-class Observable(StrEnum):
+class Observable(str, Enum):
     """Stable names for observable quantities exposed by devices.
 
-    These are the canonical identifiers for things you can observe from a device —
-    whether the device is a pure sensor (temperature, illumination) or an actuator
-    reporting its own state (position, cover_state, window_state). Independent of
-    the EEP spec field IDs (which may vary across profiles: 'TMP', 'TEMP', 'T', …).
+    Each member has two intrinsic properties:
+    - Its string value (the semantic id, e.g. "temperature") — used as dict key and in comparisons.
+    - ``unit`` — the one canonical physical unit for that quantity (``None`` for dimensionless
+      or categorical values). Units are domain-conventional, not necessarily SI base units
+      (e.g. °C rather than K, Wh rather than J).
+
+    Observable names are semantic, not unit-encoding: the name says *what* is observed,
+    not *how* it is expressed. The unit is always ``observable.unit``.
     """
 
+    def __new__(cls, value: str, unit: str | None = None):
+        obj = str.__new__(cls, value)
+        obj._value_ = value
+        obj.unit = unit
+        return obj
+
     # Sensor values
-    TEMPERATURE = "temperature"
-    HUMIDITY = "humidity"
-    ILLUMINATION = "illumination"
-    MOTION = "motion"
-    VOLTAGE = "voltage"
+    TEMPERATURE = ("temperature", "°C")
+    HUMIDITY = ("humidity", "%")
+    ILLUMINATION = ("illumination", "lx")
+    MOTION = ("motion", None)
+    VOLTAGE = ("voltage", "V")
 
     # Cover / blind control
-    POSITION = "position"
-    ANGLE = "angle"
-    COVER_STATE = "cover_state"
+    POSITION = ("position", "%")
+    ANGLE = ("angle", "%")
+    COVER_STATE = ("cover_state", None)
 
     # Window handle
-    WINDOW_STATE = "window_state"
+    WINDOW_STATE = ("window_state", None)
 
     # Switch / dimmer actuator
-    SWITCH_STATE = "switch_state"
-    OUTPUT_VALUE = "output_value"
-    ERROR_LEVEL = "error_level"
-    PILOT_WIRE_MODE = "pilot_wire_mode"
-    ENERGY = "energy"
-    POWER = "power"
+    SWITCH_STATE = ("switch_state", None)
+    OUTPUT_VALUE = ("output_value", "%")
+    ERROR_LEVEL = ("error_level", None)
+    PILOT_WIRE_MODE = ("pilot_wire_mode", None)
+    ENERGY = ("energy", "Wh")
+    POWER = ("power", "W")
 
     # Button / occupancy / contact
-    CONTACT_STATE = "contact_state"
-    DAY_NIGHT = "day_night"
-    OCCUPANCY_BUTTON = "occupancy_button"
+    PUSH_BUTTON = ("push_button", None)
+    CONTACT_STATE = ("contact_state", None)
+    DAY_NIGHT = ("day_night", None)
+    OCCUPANCY_BUTTON = ("occupancy_button", None)
 
     # Room operating panel controls
-    FAN_SPEED = "fan_speed"
-    SET_POINT = "set_point"
-    TEMPERATURE_SETPOINT = "temperature_setpoint"
+    FAN_SPEED = ("fan_speed", None)
+    SET_POINT = ("set_point", None)
+    TEMPERATURE_SETPOINT = ("temperature_setpoint", "°C")
 
     # HVAC actuator
-    VALVE_POSITION = "valve_position"
+    VALVE_POSITION = ("valve_position", "%")
 
     # Metadata
-    RSSI = "rssi"
-    LAST_SEEN = "last_seen"
-    TELEGRAM_COUNT = "telegram_count"
+    RSSI = ("rssi", "dBm")
+    LAST_SEEN = ("last_seen", None)
+    TELEGRAM_COUNT = ("telegram_count", None)

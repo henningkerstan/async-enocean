@@ -8,9 +8,10 @@ Profiles in this module:
 - F6-02-02: Light and blind control - application style 2
 """
 
-from ...capabilities.push_button import F6_02_01_02PushButtonCapability
+from ...capabilities.observable import Observable
+from ...capabilities.push_button import f6_push_button_factory
 from ..id import EEP
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 
 # Shared datafields definition for all F6-02-xx profiles
 _F6_02_DATAFIELDS = [
@@ -58,11 +59,17 @@ _F6_02_DATAFIELDS = [
     ),
 ]
 
-_F6_02_FACTORIES = [
-    lambda addr, cb: F6_02_01_02PushButtonCapability(
-        device_address=addr,
-        on_state_change=cb,
-    ),
+_F6_02_FACTORIES = [f6_push_button_factory()]
+
+_F6_02_ENTITIES = [
+    Entity(id="a0", observables=frozenset({Observable.PUSH_BUTTON})),
+    Entity(id="a1", observables=frozenset({Observable.PUSH_BUTTON})),
+    Entity(id="b0", observables=frozenset({Observable.PUSH_BUTTON})),
+    Entity(id="b1", observables=frozenset({Observable.PUSH_BUTTON})),
+    Entity(id="ab0", observables=frozenset({Observable.PUSH_BUTTON})),
+    Entity(id="ab1", observables=frozenset({Observable.PUSH_BUTTON})),
+    Entity(id="a0b1", observables=frozenset({Observable.PUSH_BUTTON})),
+    Entity(id="a1b0", observables=frozenset({Observable.PUSH_BUTTON})),
 ]
 
 # Define all F6-02-xx variants using the shared datafields structure
@@ -71,6 +78,7 @@ EEP_F6_02_01 = SimpleProfileSpecification(
     name="Light and blind control - application style 1",
     datafields=_F6_02_DATAFIELDS,
     capability_factories=_F6_02_FACTORIES,
+    entities=_F6_02_ENTITIES,
 )
 
 EEP_F6_02_02 = SimpleProfileSpecification(
@@ -78,4 +86,5 @@ EEP_F6_02_02 = SimpleProfileSpecification(
     name="Light and blind control - application style 2",
     datafields=_F6_02_DATAFIELDS,
     capability_factories=_F6_02_FACTORIES,
+    entities=_F6_02_ENTITIES,
 )

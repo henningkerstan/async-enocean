@@ -1,9 +1,9 @@
 """A5-10-XX: Room Operating Panel (4BS telegram)."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ..id import EEP
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 
 # ---------------------------------------------------------------------------
 # Shared enumerations
@@ -468,23 +468,51 @@ def _fan_f() -> EEPDataField:
 # Capability factory helpers
 # ---------------------------------------------------------------------------
 
+_CAP_TMP = scalar_factory(Observable.TEMPERATURE)
+_CAP_HUM = scalar_factory(Observable.HUMIDITY)
+_CAP_SP = scalar_factory(Observable.SET_POINT)
+_CAP_TMPSP = scalar_factory(Observable.TEMPERATURE_SETPOINT)
+_CAP_FAN = scalar_factory(Observable.FAN_SPEED)
+_CAP_OCC = scalar_factory(Observable.OCCUPANCY_BUTTON)
+_CAP_SLSW = scalar_factory(Observable.DAY_NIGHT)
+_CAP_CTST = scalar_factory(Observable.CONTACT_STATE)
+_CAP_ILL = scalar_factory(Observable.ILLUMINATION)
+_CAP_VOLT = scalar_factory(Observable.VOLTAGE, entity_id="supply_voltage")
 
-def _cap(uid: str):
-    return lambda addr, cb: ScalarCapability(
-        device_address=addr, on_state_change=cb, observable=uid
-    )
+# ---------------------------------------------------------------------------
+# Entity helpers — ids use Observable.value to match ScalarCapability output
+# ---------------------------------------------------------------------------
 
-
-_CAP_TMP = _cap(Observable.TEMPERATURE)
-_CAP_HUM = _cap(Observable.HUMIDITY)
-_CAP_SP = _cap(Observable.SET_POINT)
-_CAP_TMPSP = _cap(Observable.TEMPERATURE_SETPOINT)
-_CAP_FAN = _cap(Observable.FAN_SPEED)
-_CAP_OCC = _cap(Observable.OCCUPANCY_BUTTON)
-_CAP_SLSW = _cap(Observable.DAY_NIGHT)
-_CAP_CTST = _cap(Observable.CONTACT_STATE)
-_CAP_ILL = _cap(Observable.ILLUMINATION)
-_CAP_VOLT = _cap(Observable.VOLTAGE)
+_E_TMP = Entity(
+    id=Observable.TEMPERATURE.value, observables=frozenset({Observable.TEMPERATURE})
+)
+_E_HUM = Entity(
+    id=Observable.HUMIDITY.value, observables=frozenset({Observable.HUMIDITY})
+)
+_E_SP = Entity(
+    id=Observable.SET_POINT.value, observables=frozenset({Observable.SET_POINT})
+)
+_E_TMPSP = Entity(
+    id=Observable.TEMPERATURE_SETPOINT.value,
+    observables=frozenset({Observable.TEMPERATURE_SETPOINT}),
+)
+_E_FAN = Entity(
+    id=Observable.FAN_SPEED.value, observables=frozenset({Observable.FAN_SPEED})
+)
+_E_OCC = Entity(
+    id=Observable.OCCUPANCY_BUTTON.value,
+    observables=frozenset({Observable.OCCUPANCY_BUTTON}),
+)
+_E_SLSW = Entity(
+    id=Observable.DAY_NIGHT.value, observables=frozenset({Observable.DAY_NIGHT})
+)
+_E_CTST = Entity(
+    id=Observable.CONTACT_STATE.value, observables=frozenset({Observable.CONTACT_STATE})
+)
+_E_ILL = Entity(
+    id=Observable.ILLUMINATION.value, observables=frozenset({Observable.ILLUMINATION})
+)
+_E_VOLT = Entity(id="supply_voltage", observables=frozenset({Observable.VOLTAGE}))
 
 # ---------------------------------------------------------------------------
 # Profile builder
@@ -496,12 +524,14 @@ def _spec(
     name: str,
     datafields: list[EEPDataField],
     capability_factories: list,
+    entities: list[Entity] | None = None,
 ) -> SimpleProfileSpecification:
     return SimpleProfileSpecification(
         eep=EEP.from_string(f"A5-10-{type_id:02X}"),
         name=name,
         datafields=datafields,
         capability_factories=capability_factories,
+        entities=entities or [],
     )
 
 
@@ -514,6 +544,7 @@ EEP_A5_10_01 = _spec(
     "Room operating panel – temperature sensor, set point, fan speed and occupancy control",
     [_fan8(), _sp8(8), _tmp_inv(), _lrnb(), _occ()],
     [_CAP_FAN, _CAP_SP, _CAP_TMP, _CAP_OCC],
+    [_E_FAN, _E_SP, _E_TMP, _E_OCC],
 )
 
 EEP_A5_10_02 = _spec(
@@ -521,6 +552,7 @@ EEP_A5_10_02 = _spec(
     "Room operating panel – temperature sensor, set point, fan speed and day/night control",
     [_fan8(), _sp8(8), _tmp_inv(), _lrnb(), _slsw()],
     [_CAP_FAN, _CAP_SP, _CAP_TMP, _CAP_SLSW],
+    [_E_FAN, _E_SP, _E_TMP, _E_SLSW],
 )
 
 EEP_A5_10_03 = _spec(
@@ -528,6 +560,7 @@ EEP_A5_10_03 = _spec(
     "Room operating panel – temperature sensor and set point control",
     [_sp8(8), _tmp_inv(), _lrnb()],
     [_CAP_SP, _CAP_TMP],
+    [_E_SP, _E_TMP],
 )
 
 EEP_A5_10_04 = _spec(
@@ -535,6 +568,7 @@ EEP_A5_10_04 = _spec(
     "Room operating panel – temperature sensor, set point and fan speed control",
     [_fan8(), _sp8(8), _tmp_inv(), _lrnb()],
     [_CAP_FAN, _CAP_SP, _CAP_TMP],
+    [_E_FAN, _E_SP, _E_TMP],
 )
 
 EEP_A5_10_05 = _spec(
@@ -542,6 +576,7 @@ EEP_A5_10_05 = _spec(
     "Room operating panel – temperature sensor, set point and occupancy control",
     [_sp8(8), _tmp_inv(), _lrnb(), _occ()],
     [_CAP_SP, _CAP_TMP, _CAP_OCC],
+    [_E_SP, _E_TMP, _E_OCC],
 )
 
 EEP_A5_10_06 = _spec(
@@ -549,6 +584,7 @@ EEP_A5_10_06 = _spec(
     "Room operating panel – temperature sensor, set point and day/night control",
     [_sp8(8), _tmp_inv(), _lrnb(), _slsw()],
     [_CAP_SP, _CAP_TMP, _CAP_SLSW],
+    [_E_SP, _E_TMP, _E_SLSW],
 )
 
 EEP_A5_10_07 = _spec(
@@ -556,6 +592,7 @@ EEP_A5_10_07 = _spec(
     "Room operating panel – temperature sensor and fan speed control",
     [_fan8(), _tmp_inv(), _lrnb()],
     [_CAP_FAN, _CAP_TMP],
+    [_E_FAN, _E_TMP],
 )
 
 EEP_A5_10_08 = _spec(
@@ -563,6 +600,7 @@ EEP_A5_10_08 = _spec(
     "Room operating panel – temperature sensor, fan speed and occupancy control",
     [_fan8(), _tmp_inv(), _lrnb(), _occ()],
     [_CAP_FAN, _CAP_TMP, _CAP_OCC],
+    [_E_FAN, _E_TMP, _E_OCC],
 )
 
 EEP_A5_10_09 = _spec(
@@ -570,6 +608,7 @@ EEP_A5_10_09 = _spec(
     "Room operating panel – temperature sensor, fan speed and day/night control",
     [_fan8(), _tmp_inv(), _lrnb(), _slsw()],
     [_CAP_FAN, _CAP_TMP, _CAP_SLSW],
+    [_E_FAN, _E_TMP, _E_SLSW],
 )
 
 EEP_A5_10_0A = _spec(
@@ -577,6 +616,7 @@ EEP_A5_10_0A = _spec(
     "Room operating panel – temperature sensor, set point adjust and single input contact",
     [_sp8(8), _tmp_inv(), _lrnb(), _ctst()],
     [_CAP_SP, _CAP_TMP, _CAP_CTST],
+    [_E_SP, _E_TMP, _E_CTST],
 )
 
 EEP_A5_10_0B = _spec(
@@ -584,6 +624,7 @@ EEP_A5_10_0B = _spec(
     "Room operating panel – temperature sensor and single input contact",
     [_tmp_inv(), _lrnb(), _ctst()],
     [_CAP_TMP, _CAP_CTST],
+    [_E_TMP, _E_CTST],
 )
 
 EEP_A5_10_0C = _spec(
@@ -591,6 +632,7 @@ EEP_A5_10_0C = _spec(
     "Room operating panel – temperature sensor and occupancy control",
     [_tmp_inv(), _lrnb(), _occ()],
     [_CAP_TMP, _CAP_OCC],
+    [_E_TMP, _E_OCC],
 )
 
 EEP_A5_10_0D = _spec(
@@ -598,6 +640,7 @@ EEP_A5_10_0D = _spec(
     "Room operating panel – temperature sensor and day/night control",
     [_tmp_inv(), _lrnb(), _slsw()],
     [_CAP_TMP, _CAP_SLSW],
+    [_E_TMP, _E_SLSW],
 )
 
 # ---------------------------------------------------------------------------
@@ -609,6 +652,7 @@ EEP_A5_10_10 = _spec(
     "Room operating panel – temperature and humidity sensor, set point and occupancy control",
     [_sp8(0), _hum(), _tmp_fwd(), _lrnb(), _occ()],
     [_CAP_SP, _CAP_HUM, _CAP_TMP, _CAP_OCC],
+    [_E_SP, _E_HUM, _E_TMP, _E_OCC],
 )
 
 EEP_A5_10_11 = _spec(
@@ -616,6 +660,7 @@ EEP_A5_10_11 = _spec(
     "Room operating panel – temperature and humidity sensor, set point and day/night control",
     [_sp8(0), _hum(), _tmp_fwd(), _lrnb(), _slsw()],
     [_CAP_SP, _CAP_HUM, _CAP_TMP, _CAP_SLSW],
+    [_E_SP, _E_HUM, _E_TMP, _E_SLSW],
 )
 
 EEP_A5_10_12 = _spec(
@@ -623,6 +668,7 @@ EEP_A5_10_12 = _spec(
     "Room operating panel – temperature and humidity sensor and set point",
     [_sp8(0), _hum(), _tmp_fwd(), _lrnb()],
     [_CAP_SP, _CAP_HUM, _CAP_TMP],
+    [_E_SP, _E_HUM, _E_TMP],
 )
 
 EEP_A5_10_13 = _spec(
@@ -630,6 +676,7 @@ EEP_A5_10_13 = _spec(
     "Room operating panel – temperature and humidity sensor, occupancy control",
     [_hum(), _tmp_fwd(), _lrnb(), _occ()],
     [_CAP_HUM, _CAP_TMP, _CAP_OCC],
+    [_E_HUM, _E_TMP, _E_OCC],
 )
 
 EEP_A5_10_14 = _spec(
@@ -637,6 +684,7 @@ EEP_A5_10_14 = _spec(
     "Room operating panel – temperature and humidity sensor, day/night control",
     [_hum(), _tmp_fwd(), _lrnb(), _slsw()],
     [_CAP_HUM, _CAP_TMP, _CAP_SLSW],
+    [_E_HUM, _E_TMP, _E_SLSW],
 )
 
 # ---------------------------------------------------------------------------
@@ -648,6 +696,7 @@ EEP_A5_10_15 = _spec(
     "Room operating panel – 10-bit temperature sensor and 6-bit set point",
     [_sp6(8), _tmp10_inv(), _lrnb()],
     [_CAP_SP, _CAP_TMP],
+    [_E_SP, _E_TMP],
 )
 
 EEP_A5_10_16 = _spec(
@@ -655,6 +704,7 @@ EEP_A5_10_16 = _spec(
     "Room operating panel – 10-bit temperature sensor, 6-bit set point and occupancy control",
     [_sp6(8), _tmp10_inv(), _lrnb(), _occ()],
     [_CAP_SP, _CAP_TMP, _CAP_OCC],
+    [_E_SP, _E_TMP, _E_OCC],
 )
 
 EEP_A5_10_17 = _spec(
@@ -662,6 +712,7 @@ EEP_A5_10_17 = _spec(
     "Room operating panel – 10-bit temperature sensor and occupancy control",
     [_tmp10_inv(), _lrnb(), _occ()],
     [_CAP_TMP, _CAP_OCC],
+    [_E_TMP, _E_OCC],
 )
 
 # ---------------------------------------------------------------------------
@@ -673,6 +724,7 @@ EEP_A5_10_18 = _spec(
     "Room operating panel – illumination, temperature set point, temperature, fan speed, occupancy",
     [_ill(), _tmpsp_inv250(), _tmp_inv250(), _fan3(25), _lrnb(), _oed(30), _ob(31)],
     [_CAP_ILL, _CAP_TMPSP, _CAP_TMP, _CAP_FAN, _CAP_OCC],
+    [_E_ILL, _E_TMPSP, _E_TMP, _E_FAN, _E_OCC],
 )
 
 EEP_A5_10_19 = _spec(
@@ -680,6 +732,7 @@ EEP_A5_10_19 = _spec(
     "Room operating panel – humidity, temperature set point, temperature, fan speed, occupancy",
     [_hum_db3(), _tmpsp_inv250(), _tmp_inv250(), _fan3(25), _lrnb(), _ob(30), _oed(31)],
     [_CAP_HUM, _CAP_TMPSP, _CAP_TMP, _CAP_FAN, _CAP_OCC],
+    [_E_HUM, _E_TMPSP, _E_TMP, _E_FAN, _E_OCC],
 )
 
 EEP_A5_10_1A = _spec(
@@ -687,6 +740,7 @@ EEP_A5_10_1A = _spec(
     "Room operating panel – supply voltage, temperature set point, temperature, fan speed, occupancy",
     [_sv(), _tmpsp_inv250(), _tmp_inv250(), _fan3(25), _lrnb(), _oed(30), _ob(31)],
     [_CAP_VOLT, _CAP_TMPSP, _CAP_TMP, _CAP_FAN, _CAP_OCC],
+    [_E_VOLT, _E_TMPSP, _E_TMP, _E_FAN, _E_OCC],
 )
 
 EEP_A5_10_1B = _spec(
@@ -694,6 +748,7 @@ EEP_A5_10_1B = _spec(
     "Room operating panel – supply voltage, illumination, temperature, fan speed, occupancy",
     [_sv(), _ill(), _tmp_inv250(), _fan3(25), _lrnb(), _oed(30), _ob(31)],
     [_CAP_VOLT, _CAP_ILL, _CAP_TMP, _CAP_FAN, _CAP_OCC],
+    [_E_VOLT, _E_ILL, _E_TMP, _E_FAN, _E_OCC],
 )
 
 EEP_A5_10_1C = _spec(
@@ -701,6 +756,7 @@ EEP_A5_10_1C = _spec(
     "Room operating panel – illumination, illumination set point, temperature, fan speed, occupancy",
     [_ill(), _illsp(), _tmp_inv250(), _fan3(25), _lrnb(), _oed(30), _ob(31)],
     [_CAP_ILL, _CAP_TMP, _CAP_FAN, _CAP_OCC],
+    [_E_ILL, _E_TMP, _E_FAN, _E_OCC],
 )
 
 EEP_A5_10_1D = _spec(
@@ -708,6 +764,7 @@ EEP_A5_10_1D = _spec(
     "Room operating panel – humidity, humidity set point, temperature, fan speed, occupancy",
     [_hum_db3(), _humsp(), _tmp_inv250(), _fan3(25), _lrnb(), _oed(30), _ob(31)],
     [_CAP_HUM, _CAP_TMP, _CAP_FAN, _CAP_OCC],
+    [_E_HUM, _E_TMP, _E_FAN, _E_OCC],
 )
 
 EEP_A5_10_1E = _spec(
@@ -715,6 +772,7 @@ EEP_A5_10_1E = _spec(
     "Room operating panel – supply voltage, illumination, temperature, fan speed, occupancy (alias for 1B)",
     [_sv(), _ill(), _tmp_inv250(), _fan3(25), _lrnb(), _oed(30), _ob(31)],
     [_CAP_VOLT, _CAP_ILL, _CAP_TMP, _CAP_FAN, _CAP_OCC],
+    [_E_VOLT, _E_ILL, _E_TMP, _E_FAN, _E_OCC],
 )
 
 # ---------------------------------------------------------------------------
@@ -736,6 +794,7 @@ EEP_A5_10_1F = _spec(
         _occ(),
     ],
     [_CAP_FAN, _CAP_SP, _CAP_TMP, _CAP_OCC],
+    [_E_FAN, _E_SP, _E_TMP, _E_OCC],
 )
 
 # ---------------------------------------------------------------------------
@@ -747,6 +806,7 @@ EEP_A5_10_20 = _spec(
     "Room operating panel – set point, temperature, set point mode, battery, user activity",
     [_sp8(0), _tmp_fwd(), _spm(), _batt(), _lrnb(), _act()],
     [_CAP_SP, _CAP_TMP],
+    [_E_SP, _E_TMP],
 )
 
 EEP_A5_10_21 = _spec(
@@ -754,6 +814,7 @@ EEP_A5_10_21 = _spec(
     "Room operating panel – set point, humidity, temperature, set point mode, battery, user activity",
     [_sp8(0), _hum(), _tmp_fwd(), _spm(), _batt(), _lrnb(), _act()],
     [_CAP_SP, _CAP_HUM, _CAP_TMP],
+    [_E_SP, _E_HUM, _E_TMP],
 )
 
 # ---------------------------------------------------------------------------
@@ -765,6 +826,7 @@ EEP_A5_10_22 = _spec(
     "Room operating panel – temperature, set point, humidity, fan speed",
     [_sp8(0), _hum(), _tmp_fwd(), _fan3_2223(24), _lrnb()],
     [_CAP_SP, _CAP_HUM, _CAP_TMP, _CAP_FAN],
+    [_E_SP, _E_HUM, _E_TMP, _E_FAN],
 )
 
 EEP_A5_10_23 = _spec(
@@ -772,6 +834,7 @@ EEP_A5_10_23 = _spec(
     "Room operating panel – temperature, set point, humidity, fan speed, occupancy",
     [_sp8(0), _hum(), _tmp_fwd(), _fan3_2223(24), _lrnb(), _occ23()],
     [_CAP_SP, _CAP_HUM, _CAP_TMP, _CAP_FAN, _CAP_OCC],
+    [_E_SP, _E_HUM, _E_TMP, _E_FAN, _E_OCC],
 )
 
 __all__ = [

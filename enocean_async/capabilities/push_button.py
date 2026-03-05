@@ -3,8 +3,10 @@ from dataclasses import dataclass, field
 from time import time
 
 from ..eep.message import EEPMessage
+from ..eep.profile import CapabilityFactory
 from .capability import Capability
-from .state_change import StateChange, StateChangeSource
+from .observable import Observable
+from .state_change import EntityStateChange, EntityStateChangeSource
 
 PUSHED = "pushed"
 RELEASED = "released"
@@ -44,13 +46,13 @@ class PushButtonCapability(Capability):
             self._button_held[button_id] = True
 
             self._emit(
-                StateChange(
-                    device_address=self.device_address,
-                    observable=button_id,
-                    value=HOLD,
+                EntityStateChange(
+                    device_id=self.device_address,
+                    entity_id=button_id,
+                    values={Observable.PUSH_BUTTON: HOLD},
                     timestamp=time(),
                     time_elapsed=duration,
-                    source=StateChangeSource.TIMER,
+                    source=EntityStateChangeSource.TIMER,
                 )
             )
 
@@ -68,13 +70,13 @@ class PushButtonCapability(Capability):
             del self._hold_tasks[button_id]
 
         self._emit(
-            StateChange(
-                device_address=self.device_address,
-                observable=button_id,
-                value=RELEASED,
+            EntityStateChange(
+                device_id=self.device_address,
+                entity_id=button_id,
+                values={Observable.PUSH_BUTTON: RELEASED},
                 timestamp=time(),
                 time_elapsed=duration,
-                source=StateChangeSource.TIMER,
+                source=EntityStateChangeSource.TIMER,
             )
         )
 
@@ -105,12 +107,12 @@ class PushButtonCapability(Capability):
         self._release_tasks[button_id] = timeout_task
 
         self._emit(
-            StateChange(
-                device_address=self.device_address,
-                observable=button_id,
-                value=PUSHED,
+            EntityStateChange(
+                device_id=self.device_address,
+                entity_id=button_id,
+                values={Observable.PUSH_BUTTON: PUSHED},
                 timestamp=current_time,
-                source=StateChangeSource.TELEGRAM,
+                source=EntityStateChangeSource.TELEGRAM,
             )
         )
 
@@ -119,12 +121,12 @@ class PushButtonCapability(Capability):
         press_time = self._button_press_times.get(button_id)
         if press_time is None:
             self._emit(
-                StateChange(
-                    device_address=self.device_address,
-                    observable=button_id,
-                    value=RELEASED,
+                EntityStateChange(
+                    device_id=self.device_address,
+                    entity_id=button_id,
+                    values={Observable.PUSH_BUTTON: RELEASED},
                     timestamp=current_time,
-                    source=StateChangeSource.TELEGRAM,
+                    source=EntityStateChangeSource.TELEGRAM,
                 )
             )
             return
@@ -147,37 +149,37 @@ class PushButtonCapability(Capability):
 
             if 0 < time_since_last_click <= self.double_click_window:
                 self._emit(
-                    StateChange(
-                        device_address=self.device_address,
-                        observable=button_id,
-                        value=DOUBLE_CLICK,
+                    EntityStateChange(
+                        device_id=self.device_address,
+                        entity_id=button_id,
+                        values={Observable.PUSH_BUTTON: DOUBLE_CLICK},
                         timestamp=current_time,
                         time_elapsed=duration,
-                        source=StateChangeSource.TELEGRAM,
+                        source=EntityStateChangeSource.TELEGRAM,
                     )
                 )
                 self._last_click_times[button_id] = 0
             else:
                 self._emit(
-                    StateChange(
-                        device_address=self.device_address,
-                        observable=button_id,
-                        value=CLICK,
+                    EntityStateChange(
+                        device_id=self.device_address,
+                        entity_id=button_id,
+                        values={Observable.PUSH_BUTTON: CLICK},
                         timestamp=current_time,
                         time_elapsed=duration,
-                        source=StateChangeSource.TELEGRAM,
+                        source=EntityStateChangeSource.TELEGRAM,
                     )
                 )
                 self._last_click_times[button_id] = current_time
 
         self._emit(
-            StateChange(
-                device_address=self.device_address,
-                observable=button_id,
-                value=RELEASED,
+            EntityStateChange(
+                device_id=self.device_address,
+                entity_id=button_id,
+                values={Observable.PUSH_BUTTON: RELEASED},
                 timestamp=current_time,
                 time_elapsed=duration,
-                source=StateChangeSource.TELEGRAM,
+                source=EntityStateChangeSource.TELEGRAM,
             )
         )
 
@@ -248,3 +250,17 @@ class F6_02_01_02PushButtonCapability(PushButtonCapability):
                     self._button_released(
                         button_id=button_id, current_time=current_time
                     )
+
+
+def f6_push_button_factory() -> CapabilityFactory:
+    """Return a ``CapabilityFactory`` that creates an ``F6_02_01_02PushButtonCapability``.
+
+    Emits ``Observable.PUSH_BUTTON`` state changes with the button ID (``"a0"``, ``"b1"``,
+    ``"ab0"``, …) as ``EntityStateChange.entity_id`` and the event type (``"click"``, ``"hold"``,
+    ``"double-click"``, ``"pushed"``, ``"released"``) as the value in ``values``.
+    """
+    return CapabilityFactory(
+        factory=lambda addr, cb: F6_02_01_02PushButtonCapability(
+            device_address=addr, on_state_change=cb
+        ),
+    )

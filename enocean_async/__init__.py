@@ -13,9 +13,9 @@ from .capabilities.dimmer_commands import Dim
 from .capabilities.fan_commands import SetFanSpeed
 from .capabilities.observable import Observable
 from .capabilities.state_change import (
-    StateChange,
-    StateChangeCallback,
-    StateChangeSource,
+    EntityStateChange,
+    EntityStateChangeCallback,
+    EntityStateChangeSource,
 )
 from .capabilities.switch_commands import (
     QueryActuatorMeasurement,
@@ -29,9 +29,11 @@ from .eep.id import EEP
 from .eep.manufacturer import Manufacturer
 from .eep.message import EEPMessage, EEPMessageType, EEPMessageValue, EntityValue
 from .eep.profile import (
+    DeviceDescriptor,
     EEPDataField,
     EEPSpecification,
     EEPTelegram,
+    Entity,
     SimpleProfileSpecification,
 )
 from .erp1.errors import ERP1ParseError
@@ -59,11 +61,13 @@ __all__ = [
     "SetSwitchOutput",
     "StopCover",
     # State changes
-    "StateChange",
-    "StateChangeCallback",
-    "StateChangeSource",
+    "EntityStateChange",
+    "EntityStateChangeCallback",
+    "EntityStateChangeSource",
+    "Entity",
     # Device and gateway
     "Device",
+    "DeviceDescriptor",
     "Gateway",
     # EEP layer
     "EEP",

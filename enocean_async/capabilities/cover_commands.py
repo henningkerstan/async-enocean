@@ -28,9 +28,6 @@ class SetCoverPosition(Command):
     lock_mode: int = 0
     """LOCK field: 0 = no change, 1 = set blockage, 2 = set alarm, 7 = unblock."""
 
-    channel: int = 15
-    """CHN field: 0–3 for a specific channel, 15 = all channels."""
-
 
 @dataclass
 class StopCover(Command):
@@ -38,15 +35,9 @@ class StopCover(Command):
 
     action: ClassVar[Action] = Action.STOP_COVER
 
-    channel: int = 15
-    """CHN field: 0–3 for a specific channel, 15 = all channels."""
-
 
 @dataclass
 class QueryCoverPosition(Command):
     """Request the current position and angle from a cover actuator."""
 
     action: ClassVar[Action] = Action.QUERY_COVER_POSITION
-
-    channel: int = 15
-    """CHN field: 0–3 for a specific channel, 15 = all channels."""

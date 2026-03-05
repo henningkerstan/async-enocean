@@ -4,9 +4,10 @@ import logging
 from time import time
 
 from ..eep.message import EEPMessage
+from ..eep.profile import CapabilityFactory
 from .capability import Capability
 from .observable import Observable
-from .state_change import StateChange, StateChangeSource
+from .state_change import EntityStateChange, EntityStateChangeSource
 
 # Watchdog timeout in seconds to detect when cover movement has stopped
 COVER_WATCHDOG_TIMEOUT = 1.5
@@ -42,29 +43,15 @@ class CoverCapability(Capability):
         pos_value = pos_entity.value if pos_entity else None
         ang_value = ang_entity.value if ang_entity else None
 
+        values: dict = {}
+
         if pos_value is not None:
-            self._emit(
-                StateChange(
-                    device_address=self.device_address,
-                    observable=Observable.POSITION,
-                    value=pos_value,
-                    timestamp=current_time,
-                    source=StateChangeSource.TELEGRAM,
-                )
-            )
+            values[Observable.POSITION] = pos_value
 
             # Derive cover state from position changes
             cover_state = self._derive_cover_state(pos_value)
             if cover_state is not None:
-                self._emit(
-                    StateChange(
-                        device_address=self.device_address,
-                        observable=Observable.COVER_STATE,
-                        value=cover_state,
-                        timestamp=current_time,
-                        source=StateChangeSource.TELEGRAM,
-                    )
-                )
+                values[Observable.COVER_STATE] = cover_state
                 self._current_cover_state = cover_state
 
                 # Restart watchdog timer if cover is moving
@@ -81,13 +68,16 @@ class CoverCapability(Capability):
             self._previous_position = pos_value
 
         if ang_value is not None:
+            values[Observable.ANGLE] = ang_value
+
+        if values:
             self._emit(
-                StateChange(
-                    device_address=self.device_address,
-                    observable=Observable.ANGLE,
-                    value=ang_value,
+                EntityStateChange(
+                    device_id=self.device_address,
+                    entity_id="cover",
+                    values=values,
                     timestamp=current_time,
-                    source=StateChangeSource.TELEGRAM,
+                    source=EntityStateChangeSource.TELEGRAM,
                 )
             )
 
@@ -103,12 +93,12 @@ class CoverCapability(Capability):
             await asyncio.sleep(COVER_WATCHDOG_TIMEOUT)
             # Timeout elapsed, emit stopped state
             self._emit(
-                StateChange(
-                    device_address=self.device_address,
-                    observable=Observable.COVER_STATE,
-                    value="stopped",
+                EntityStateChange(
+                    device_id=self.device_address,
+                    entity_id="cover",
+                    values={Observable.COVER_STATE: "stopped"},
                     timestamp=time(),
-                    source=StateChangeSource.TIMER,
+                    source=EntityStateChangeSource.TIMER,
                 )
             )
             self._current_cover_state = "stopped"
@@ -139,3 +129,12 @@ class CoverCapability(Capability):
             return "opening"
         else:
             return "stopped"  # No change in position, state remains the same
+
+
+def cover_factory() -> CapabilityFactory:
+    """Return a ``CapabilityFactory`` that creates a ``CoverCapability``."""
+    return CapabilityFactory(
+        factory=lambda addr, cb: CoverCapability(
+            device_address=addr, on_state_change=cb
+        ),
+    )

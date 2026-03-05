@@ -1,16 +1,13 @@
 from enocean_async.eep.manufacturer import Manufacturer
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ..id import EEP
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 
-_WIN_FACTORIES = [
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.WINDOW_STATE,
-    ),
+_WIN_FACTORIES = [scalar_factory(Observable.WINDOW_STATE)]
+_WIN_ENTITIES = [
+    Entity(id="window_state", observables=frozenset({Observable.WINDOW_STATE}))
 ]
 
 EEP_F6_10_00 = SimpleProfileSpecification(
@@ -33,6 +30,7 @@ EEP_F6_10_00 = SimpleProfileSpecification(
         ),
     ],
     capability_factories=_WIN_FACTORIES,
+    entities=_WIN_ENTITIES,
 )
 
 EEP_F6_10_00_ELTAKO = SimpleProfileSpecification(
@@ -53,4 +51,5 @@ EEP_F6_10_00_ELTAKO = SimpleProfileSpecification(
         ),
     ],
     capability_factories=_WIN_FACTORIES,
+    entities=_WIN_ENTITIES,
 )

@@ -1,6 +1,6 @@
 """Base class for typed device commands on the send pipeline."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass
@@ -12,3 +12,6 @@ class Command:
     The corresponding EEP encoder receives the Command instance directly and translates
     its typed fields into raw EEP field values.
     """
+
+    entity_id: str = field(default="", kw_only=True)
+    """Target entity ID. Encoders use this to determine the target channel or sub-unit."""

@@ -6,15 +6,61 @@ from ..capabilities.action import Action
 from ..capabilities.observable import Observable
 from .id import EEP
 
+
+@dataclass(frozen=True)
+class Entity:
+    """A physical real-world sub-unit of a device (push button, relay channel, cover motor, sensor).
+
+    Declared statically in the EEP specification. Each entity has a stable string ``id``
+    within the device, a set of ``observables`` it reports, and a set of ``actions`` it accepts.
+    A unique physical thing in the system is the pair ``(device_address, entity_id)``.
+    """
+
+    id: str
+    observables: frozenset[Observable]
+    actions: frozenset[Action] = field(default_factory=frozenset)
+
+
 type TelegramRawValues = dict[str, int]
 type ScaleFunction = Callable[[TelegramRawValues], float]
 type UnitFunction = Callable[[TelegramRawValues], str]
 
-# Type aliases for capability factories, semantic resolvers, and command encoders.
+# Type aliases for semantic resolvers and command encoders.
 # Using Any to avoid circular imports (capabilities/ imports from eep/).
 type SemanticResolver = Callable[[dict[str, Any]], Any | None]
-type CapabilityFactory = Callable[[Any, Any], Any]
-type CommandEncoder = Callable[[Any], Any]  # DeviceCommand → EEPMessage
+type CommandEncoder = Callable[[Any], Any]  # Command → EEPMessage
+
+
+@dataclass
+class CapabilityFactory:
+    """Wraps a capability constructor for use in ``EEPSpecification.capability_factories``.
+
+    Entity metadata (observables, actions) is now declared separately via
+    ``EEPSpecification.entities`` rather than on the factory itself.
+    """
+
+    factory: Callable[[Any, Any], Any]
+    """Callable that takes ``(device_address, on_state_change)`` and returns a Capability."""
+
+    def __call__(self, device_address: Any, on_state_change: Any) -> Any:
+        return self.factory(device_address, on_state_change)
+
+
+@dataclass
+class DeviceDescriptor:
+    """Setup-time description of what a device type exposes and accepts.
+
+    Returned by ``EEPSpecification.device_descriptor()``.  An integration can obtain
+    this immediately after calling ``gateway.add_device()`` — before any telegrams arrive
+    — and use it to create all required platform entities.
+    """
+
+    eep: EEP
+
+    entities: list[Entity]
+    """All entities this device type exposes, including the three metadata entities
+    (rssi, last_seen, telegram_count) always added by the gateway.
+    """
 
 
 @dataclass
@@ -126,6 +172,28 @@ class EEPSpecification:
     an EEPMessage with message_type.id set and values filled with raw field values (field_id → raw int).
     The gateway sets message.sender and message.destination before calling EEPHandler.encode()."""
 
+    entities: list[Entity] = field(default_factory=list)
+    """Physical entities declared by this EEP — one per real-world sub-unit (push button,
+    relay channel, sensor element, cover motor). Consumed by ``device_descriptor()``."""
+
+    def device_descriptor(self) -> "DeviceDescriptor":
+        """Return a setup-time descriptor of what this device type exposes and accepts.
+
+        Combines ``self.entities`` with the three metadata entities (rssi, last_seen,
+        telegram_count) that the gateway always prepends to every device.
+        """
+        _METADATA_ENTITIES = [
+            Entity(id="rssi", observables=frozenset({Observable.RSSI})),
+            Entity(id="last_seen", observables=frozenset({Observable.LAST_SEEN})),
+            Entity(
+                id="telegram_count", observables=frozenset({Observable.TELEGRAM_COUNT})
+            ),
+        ]
+        return DeviceDescriptor(
+            eep=self.eep,
+            entities=self.entities + _METADATA_ENTITIES,
+        )
+
 
 @dataclass
 class SimpleProfileSpecification(EEPSpecification):
@@ -139,6 +207,7 @@ class SimpleProfileSpecification(EEPSpecification):
         semantic_resolvers: dict[Observable, SemanticResolver] | None = None,
         capability_factories: list[CapabilityFactory] | None = None,
         command_encoders: dict[Action, CommandEncoder] | None = None,
+        entities: list[Entity] | None = None,
     ):
         """Initialize a single-telegram EEP.
 
@@ -149,6 +218,7 @@ class SimpleProfileSpecification(EEPSpecification):
             semantic_resolvers: Optional dict of Observable → resolver for multi-field combinations.
             capability_factories: Optional list of capability factory callables.
             command_encoders: Optional dict of Action → encoder callables.
+            entities: Optional list of Entity declarations for this EEP.
         """
 
         super().__init__(
@@ -160,4 +230,5 @@ class SimpleProfileSpecification(EEPSpecification):
             semantic_resolvers=semantic_resolvers or {},
             capability_factories=capability_factories or [],
             command_encoders=command_encoders or {},
+            entities=entities or [],
         )

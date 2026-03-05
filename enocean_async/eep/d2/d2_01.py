@@ -14,7 +14,7 @@ from dataclasses import dataclass
 
 from ...capabilities.action import Action
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ...capabilities.switch_commands import (
     QueryActuatorMeasurement,
     QueryActuatorStatus,
@@ -598,7 +598,8 @@ def _encode_set_output(action: SetSwitchOutput) -> EEPMessage:
         message_type=EEPMessageType(id=0x01, description=_EEP_D2_01_Commands[0x1].name),
     )
     msg.values["DV"] = EEPMessageValue(raw=action.dim_value, value=action.dim_value)
-    msg.values["I/O"] = EEPMessageValue(raw=action.channel, value=action.channel)
+    io_val = int(action.entity_id) if action.entity_id.isdigit() else 0x1E
+    msg.values["I/O"] = EEPMessageValue(raw=io_val, value=io_val)
     msg.values["OV"] = EEPMessageValue(
         raw=action.output_value, value=action.output_value
     )
@@ -610,7 +611,8 @@ def _encode_query_status(action: QueryActuatorStatus) -> EEPMessage:
         sender=None,
         message_type=EEPMessageType(id=0x03, description=_EEP_D2_01_Commands[0x3].name),
     )
-    msg.values["I/O"] = EEPMessageValue(raw=action.channel, value=action.channel)
+    io_val = int(action.entity_id) if action.entity_id.isdigit() else 0x1E
+    msg.values["I/O"] = EEPMessageValue(raw=io_val, value=io_val)
     return msg
 
 
@@ -619,7 +621,8 @@ def _encode_query_measurement(action: QueryActuatorMeasurement) -> EEPMessage:
         sender=None,
         message_type=EEPMessageType(id=0x06, description=_EEP_D2_01_Commands[0x6].name),
     )
-    msg.values["I/O"] = EEPMessageValue(raw=action.channel, value=action.channel)
+    io_val = int(action.entity_id) if action.entity_id.isdigit() else 0x1E
+    msg.values["I/O"] = EEPMessageValue(raw=io_val, value=io_val)
     msg.values["qu"] = EEPMessageValue(
         raw=int(action.query_power), value=int(action.query_power)
     )
@@ -688,55 +691,33 @@ _DIMMER_RESOLVERS = {
     Observable.OUTPUT_VALUE: _resolve_output_value,
 }
 
-_sc = ScalarCapability  # local alias to keep factory lines short
-
 
 def _factories(dimming: bool) -> list:
     # CMD 0x4 and 0x7 both carry an I/O channel field; 0x1E means "not applicable"
     # (single-channel device or all-channels query) — map that sentinel to channel=None.
     base = [
-        lambda addr, cb: _sc(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.SWITCH_STATE,
-            channel_field_id="I/O",
-            channel_not_applicable=0x1E,
+        scalar_factory(
+            Observable.SWITCH_STATE,
+            entity_id_field="I/O",
+            entity_id_not_applicable=0x1E,
         ),
-        lambda addr, cb: _sc(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.ERROR_LEVEL,
-            channel_field_id="I/O",
-            channel_not_applicable=0x1E,
+        scalar_factory(
+            Observable.ERROR_LEVEL, entity_id_field="I/O", entity_id_not_applicable=0x1E
         ),
-        lambda addr, cb: _sc(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.PILOT_WIRE_MODE,
+        scalar_factory(Observable.PILOT_WIRE_MODE),
+        scalar_factory(
+            Observable.ENERGY, entity_id_field="I/O", entity_id_not_applicable=0x1E
         ),
-        lambda addr, cb: _sc(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.ENERGY,
-            channel_field_id="I/O",
-            channel_not_applicable=0x1E,
-        ),
-        lambda addr, cb: _sc(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.POWER,
-            channel_field_id="I/O",
-            channel_not_applicable=0x1E,
+        scalar_factory(
+            Observable.POWER, entity_id_field="I/O", entity_id_not_applicable=0x1E
         ),
     ]
     if dimming:
         base.append(
-            lambda addr, cb: _sc(
-                device_address=addr,
-                on_state_change=cb,
-                observable=Observable.OUTPUT_VALUE,
-                channel_field_id="I/O",
-                channel_not_applicable=0x1E,
+            scalar_factory(
+                Observable.OUTPUT_VALUE,
+                entity_id_field="I/O",
+                entity_id_not_applicable=0x1E,
             )
         )
     return base

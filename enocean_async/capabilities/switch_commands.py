@@ -16,9 +16,6 @@ class SetSwitchOutput(Command):
     output_value: int
     """OV field: 0=OFF, 1–100=percentage ON, 0x7F=output value not valid/not applicable."""
 
-    channel: int = 0x1E
-    """I/O field: 0x00–0x1D=specific channel, 0x1E=all channels, 0x1F=input channel."""
-
     dim_value: int = 0
     """DV field: 0=switch to new output value immediately, 1–3=dim with timer 1–3, 4=stop dimming."""
 
@@ -29,18 +26,12 @@ class QueryActuatorStatus(Command):
 
     action: ClassVar[Action] = Action.QUERY_ACTUATOR_STATUS
 
-    channel: int = 0x1E
-    """I/O field: 0x00–0x1D=specific channel, 0x1E=all channels, 0x1F=input channel."""
-
 
 @dataclass
 class QueryActuatorMeasurement(Command):
     """Request an energy or power measurement from a D2-01 actuator (CMD 0x6)."""
 
     action: ClassVar[Action] = Action.QUERY_ACTUATOR_MEASUREMENT
-
-    channel: int = 0x1E
-    """I/O field: 0x00–0x1D=specific channel, 0x1E=all channels, 0x1F=input channel."""
 
     query_power: bool = False
     """qu field: False=query energy, True=query power."""

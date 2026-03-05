@@ -9,13 +9,14 @@ import serial_asyncio_fast as serial_asyncio
 from .address import EURID, BaseAddress, SenderAddress
 from .capabilities.command import Command
 from .capabilities.metadata import MetaDataCapability
-from .capabilities.state_change import StateChange, StateChangeCallback
+from .capabilities.state_change import EntityStateChange, EntityStateChangeCallback
 from .device.device import Device
 from .eep import EEP_SPECIFICATIONS
 from .eep.handler import EEPHandler
 from .eep.id import EEP
 from .eep.manufacturer import Manufacturer
 from .eep.message import EEPMessage
+from .eep.profile import DeviceDescriptor
 from .erp1.telegram import (
     RORG,
     ERP1Telegram,
@@ -97,7 +98,7 @@ class Gateway:
         self.__detected_devices: list[EURID | BaseAddress] = []
         self.__eep_handlers: dict[EEP, EEPHandler] = {}
         self.__devices: dict[EURID | BaseAddress, Device] = {}
-        self.__state_change_callbacks: list[StateChangeCallback] = []
+        self.__state_change_callbacks: list[EntityStateChangeCallback] = []
 
         # callbacks
         self.__esp3_receive_callbacks: list[ESP3Callback] = []
@@ -179,7 +180,7 @@ class Gateway:
     def add_response_callback(self, cb: ResponseCallback):
         self.__response_callbacks.append(cb)
 
-    def add_state_change_callback(self, cb: StateChangeCallback) -> None:
+    def add_state_change_callback(self, cb: EntityStateChangeCallback) -> None:
         """Add a callback for capability state changes."""
         self.__state_change_callbacks.append(cb)
 
@@ -503,7 +504,7 @@ class Gateway:
             f"Initialized device {address} with {len(device.capabilities)} capabilities"
         )
 
-    def __on_capability_state_change(self, state_change: StateChange) -> None:
+    def __on_capability_state_change(self, state_change: EntityStateChange) -> None:
         """Internal callback for capability state changes."""
         self.__emit(self.__state_change_callbacks, state_change)
 
@@ -518,6 +519,23 @@ class Gateway:
             self._logger.warning(
                 f"Tried to remove device with address {address}, but it was not found in the registry of known devices."
             )
+
+    def device_descriptor(
+        self, address: EURID | BaseAddress
+    ) -> DeviceDescriptor | None:
+        """Return a DeviceDescriptor for a registered device, or None if not found.
+
+        The DeviceDescriptor describes what observables and commands the device supports,
+        allowing integrations (e.g. Home Assistant) to create entities at setup time
+        without waiting for the first incoming telegram.
+        """
+        eep = self.__known_device_eeps.get(address)
+        if eep is None:
+            return None
+        spec = EEP_SPECIFICATIONS.get(eep)
+        if spec is None:
+            return None
+        return spec.device_descriptor()
 
     # ------------------------------------------------------------------
     # Gateway properties and methods

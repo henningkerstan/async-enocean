@@ -1,55 +1,37 @@
 """A5-08-XX: Light, temperature and occupancy sensors."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ..id import EEP
 from ..manufacturer import Manufacturer
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 
 _FULL_FACTORIES = [
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.VOLTAGE,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.ILLUMINATION,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.TEMPERATURE,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.MOTION,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.OCCUPANCY_BUTTON,
-    ),
+    scalar_factory(Observable.VOLTAGE, entity_id="supply_voltage"),
+    scalar_factory(Observable.ILLUMINATION),
+    scalar_factory(Observable.TEMPERATURE),
+    scalar_factory(Observable.MOTION),
+    scalar_factory(Observable.OCCUPANCY_BUTTON),
 ]
 
 _ELTAKO_FACTORIES = [
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.VOLTAGE,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.ILLUMINATION,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.MOTION,
-    ),
+    scalar_factory(Observable.VOLTAGE, entity_id="supply_voltage"),
+    scalar_factory(Observable.ILLUMINATION),
+    scalar_factory(Observable.MOTION),
+]
+
+_FULL_ENTITIES = [
+    Entity(id="supply_voltage", observables=frozenset({Observable.VOLTAGE})),
+    Entity(id="illumination", observables=frozenset({Observable.ILLUMINATION})),
+    Entity(id="temperature", observables=frozenset({Observable.TEMPERATURE})),
+    Entity(id="motion", observables=frozenset({Observable.MOTION})),
+    Entity(id="occupancy_button", observables=frozenset({Observable.OCCUPANCY_BUTTON})),
+]
+
+_ELTAKO_ENTITIES = [
+    Entity(id="supply_voltage", observables=frozenset({Observable.VOLTAGE})),
+    Entity(id="illumination", observables=frozenset({Observable.ILLUMINATION})),
+    Entity(id="motion", observables=frozenset({Observable.MOTION})),
 ]
 
 
@@ -113,6 +95,7 @@ class _EEP_A5_08(SimpleProfileSpecification):
                 ),
             ],
             capability_factories=_FULL_FACTORIES,
+            entities=_FULL_ENTITIES,
         )
 
 
@@ -157,4 +140,5 @@ EEP_A5_08_01_ELTAKO = SimpleProfileSpecification(
         ),
     ],
     capability_factories=_ELTAKO_FACTORIES,
+    entities=_ELTAKO_ENTITIES,
 )

@@ -7,10 +7,10 @@ from ...capabilities.cover_commands import (
     StopCover,
 )
 from ...capabilities.observable import Observable
-from ...capabilities.position_angle import CoverCapability
+from ...capabilities.position_angle import cover_factory
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
-from ..profile import EEPDataField, EEPSpecification, EEPTelegram
+from ..profile import EEPDataField, EEPSpecification, EEPTelegram, Entity
 
 # Shared CMD field definitions.
 # cmd_offset=-4, cmd_size=4: the CMD nibble occupies the last 4 bits of each telegram's buffer.
@@ -44,7 +44,8 @@ def _encode_set_position(action: SetCoverPosition) -> EEPMessage:
         raw=action.repositioning_mode, value=action.repositioning_mode
     )
     msg.values["LOCK"] = EEPMessageValue(raw=action.lock_mode, value=action.lock_mode)
-    msg.values["CHN"] = EEPMessageValue(raw=action.channel, value=action.channel)
+    chn_val = int(action.entity_id) if action.entity_id.isdigit() else 15
+    msg.values["CHN"] = EEPMessageValue(raw=chn_val, value=chn_val)
     return msg
 
 
@@ -53,7 +54,8 @@ def _encode_stop(action: StopCover) -> EEPMessage:
         sender=None,
         message_type=EEPMessageType(id=2, description="Stop"),
     )
-    msg.values["CHN"] = EEPMessageValue(raw=action.channel, value=action.channel)
+    chn_val = int(action.entity_id) if action.entity_id.isdigit() else 15
+    msg.values["CHN"] = EEPMessageValue(raw=chn_val, value=chn_val)
     return msg
 
 
@@ -62,7 +64,8 @@ def _encode_query_position(action: QueryCoverPosition) -> EEPMessage:
         sender=None,
         message_type=EEPMessageType(id=3, description="Query position and angle"),
     )
-    msg.values["CHN"] = EEPMessageValue(raw=action.channel, value=action.channel)
+    chn_val = int(action.entity_id) if action.entity_id.isdigit() else 15
+    msg.values["CHN"] = EEPMessageValue(raw=chn_val, value=chn_val)
     return msg
 
 
@@ -232,15 +235,25 @@ EEP_D2_05_00 = EEPSpecification(
             ],
         ),
     },
-    capability_factories=[
-        lambda addr, cb: CoverCapability(
-            device_address=addr,
-            on_state_change=cb,
-        ),
-    ],
+    capability_factories=[cover_factory()],
     command_encoders={
         Action.SET_COVER_POSITION: _encode_set_position,
         Action.STOP_COVER: _encode_stop,
         Action.QUERY_COVER_POSITION: _encode_query_position,
     },
+    entities=[
+        Entity(
+            id="cover",
+            observables=frozenset(
+                {Observable.POSITION, Observable.ANGLE, Observable.COVER_STATE}
+            ),
+            actions=frozenset(
+                {
+                    Action.SET_COVER_POSITION,
+                    Action.STOP_COVER,
+                    Action.QUERY_COVER_POSITION,
+                }
+            ),
+        ),
+    ],
 )

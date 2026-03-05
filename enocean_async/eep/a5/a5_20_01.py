@@ -5,9 +5,9 @@ The outbound direction (controller → actuator, command) is not yet implemented
 """
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ..id import EEP
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 
 EEP_A5_20_01 = SimpleProfileSpecification(
     eep=EEP.from_string("A5-20-01"),
@@ -106,16 +106,12 @@ EEP_A5_20_01 = SimpleProfileSpecification(
         ),
     ],
     capability_factories=[
-        lambda addr, cb: ScalarCapability(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.VALVE_POSITION,
-        ),
-        lambda addr, cb: ScalarCapability(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.TEMPERATURE,
-        ),
+        scalar_factory(Observable.VALVE_POSITION),
+        scalar_factory(Observable.TEMPERATURE),
+    ],
+    entities=[
+        Entity(id="valve_position", observables=frozenset({Observable.VALVE_POSITION})),
+        Entity(id="temperature", observables=frozenset({Observable.TEMPERATURE})),
     ],
 )
 

@@ -7,9 +7,9 @@ from enocean_async import (
     EEP,
     EURID,
     BaseAddress,
+    EntityStateChange,
+    EntityStateChangeSource,
     Gateway,
-    StateChange,
-    StateChangeSource,
 )
 
 
@@ -61,9 +61,9 @@ async def main(port: str) -> None:
     gateway.add_erp1_received_callback(lambda erp1: print(f"├─ {TELEGRAMMARK} {erp1}"))
     gateway.add_new_device_callback(lambda addr: print(f"├─ {EXCLAMATIONMARK} new device: {addr}"))
 
-    def on_state_change(state_change: StateChange) -> None:
+    def on_state_change(state_change: EntityStateChange) -> None:
         """Handle state changes emitted by device capabilities."""
-        if state_change.source == StateChangeSource.TIMER:
+        if state_change.source == EntityStateChangeSource.TIMER:
             print(f"\n{TIMERMARK} {STATECHANGEMARK} {state_change}")
         else:
             print(f"╰─ {STATECHANGEMARK} {state_change}")

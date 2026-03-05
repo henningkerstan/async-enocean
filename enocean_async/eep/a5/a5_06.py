@@ -1,11 +1,11 @@
 """A5-06-XX: Light sensors."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ..id import EEP
 from ..manufacturer import Manufacturer
 from ..message import EEPMessageValue
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 
 
 def _a5_06_illumination_resolver(
@@ -35,12 +35,9 @@ def _a5_06_eltako_illumination_resolver(
     return ill2 or ill1
 
 
-_ILL_FACTORY = [
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.ILLUMINATION,
-    ),
+_ILL_FACTORY = [scalar_factory(Observable.ILLUMINATION)]
+_ILL_ENTITY = [
+    Entity(id="illumination", observables=frozenset({Observable.ILLUMINATION}))
 ]
 
 
@@ -97,6 +94,7 @@ class _EEP_A5_06(SimpleProfileSpecification):
             ],
             semantic_resolvers={Observable.ILLUMINATION: _a5_06_illumination_resolver},
             capability_factories=_ILL_FACTORY,
+            entities=_ILL_ENTITY,
         )
 
 
@@ -136,6 +134,7 @@ EEP_A5_06_03 = SimpleProfileSpecification(
         ),
     ],
     capability_factories=_ILL_FACTORY,
+    entities=_ILL_ENTITY,
 )
 
 EEP_A5_06_04 = SimpleProfileSpecification(
@@ -193,16 +192,12 @@ EEP_A5_06_04 = SimpleProfileSpecification(
         ),
     ],
     capability_factories=[
-        lambda addr, cb: ScalarCapability(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.ILLUMINATION,
-        ),
-        lambda addr, cb: ScalarCapability(
-            device_address=addr,
-            on_state_change=cb,
-            observable=Observable.TEMPERATURE,
-        ),
+        scalar_factory(Observable.ILLUMINATION),
+        scalar_factory(Observable.TEMPERATURE),
+    ],
+    entities=[
+        Entity(id="illumination", observables=frozenset({Observable.ILLUMINATION})),
+        Entity(id="temperature", observables=frozenset({Observable.TEMPERATURE})),
     ],
 )
 
@@ -231,6 +226,7 @@ EEP_A5_06_01_ELTAKO = SimpleProfileSpecification(
     ],
     semantic_resolvers={Observable.ILLUMINATION: _a5_06_eltako_illumination_resolver},
     capability_factories=_ILL_FACTORY,
+    entities=_ILL_ENTITY,
 )
 
 __all__ = [

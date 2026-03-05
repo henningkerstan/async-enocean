@@ -1,21 +1,18 @@
 """A5-04-XX: Temperature and humidity sensors."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import ScalarCapability
+from ...capabilities.scalar import scalar_factory
 from ..id import EEP
-from ..profile import EEPDataField, SimpleProfileSpecification
+from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 
 _TEMP_HUM_FACTORIES = [
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.HUMIDITY,
-    ),
-    lambda addr, cb: ScalarCapability(
-        device_address=addr,
-        on_state_change=cb,
-        observable=Observable.TEMPERATURE,
-    ),
+    scalar_factory(Observable.HUMIDITY),
+    scalar_factory(Observable.TEMPERATURE),
+]
+
+_TEMP_HUM_ENTITIES = [
+    Entity(id="humidity", observables=frozenset({Observable.HUMIDITY})),
+    Entity(id="temperature", observables=frozenset({Observable.TEMPERATURE})),
 ]
 
 
@@ -61,6 +58,7 @@ class _EEP_A5_04_01_02(SimpleProfileSpecification):
                 ),
             ],
             capability_factories=_TEMP_HUM_FACTORIES,
+            entities=_TEMP_HUM_ENTITIES,
         )
 
 
@@ -102,6 +100,7 @@ EEP_A5_04_03 = SimpleProfileSpecification(
         ),
     ],
     capability_factories=_TEMP_HUM_FACTORIES,
+    entities=_TEMP_HUM_ENTITIES,
 )
 
 
