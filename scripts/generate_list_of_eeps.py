@@ -14,7 +14,7 @@ from enocean_async.semantics.observers.push_button import (
 from enocean_async.semantics.observers.scalar import ScalarObserver
 
 # Mapping of observer classes to their emitted StateChange observable_uids and possible values
-_BUTTON_EVENTS = ["pushed", "click", "double-click", "hold", "released"]
+_BUTTON_EVENTS = ["pushed", "clicked", "double-clicked", "held", "released"]
 
 OBSERVER_STATE_CHANGES = {
     F6_02_01_02PushButtonObserver: {

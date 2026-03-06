@@ -15,9 +15,9 @@ from ..observation import Observation, ObservationSource
 
 PUSHED = "pushed"
 RELEASED = "released"
-CLICK = "click"
-DOUBLE_CLICK = "double-click"
-HOLD = "hold"
+CLICKED = "clicked"
+DOUBLE_CLICKED = "double-clicked"
+HELD = "held"
 
 
 @dataclass
@@ -54,7 +54,7 @@ class PushButtonObserver(Observer):
                 Observation(
                     device_id=self.device_address,
                     entity_id=button_id,
-                    values={Observable.PUSH_BUTTON: HOLD},
+                    values={Observable.PUSH_BUTTON: HELD},
                     timestamp=time(),
                     time_elapsed=duration,
                     source=ObservationSource.TIMER,
@@ -157,7 +157,7 @@ class PushButtonObserver(Observer):
                     Observation(
                         device_id=self.device_address,
                         entity_id=button_id,
-                        values={Observable.PUSH_BUTTON: DOUBLE_CLICK},
+                        values={Observable.PUSH_BUTTON: DOUBLE_CLICKED},
                         timestamp=current_time,
                         time_elapsed=duration,
                         source=ObservationSource.TELEGRAM,
@@ -169,7 +169,7 @@ class PushButtonObserver(Observer):
                     Observation(
                         device_id=self.device_address,
                         entity_id=button_id,
-                        values={Observable.PUSH_BUTTON: CLICK},
+                        values={Observable.PUSH_BUTTON: CLICKED},
                         timestamp=current_time,
                         time_elapsed=duration,
                         source=ObservationSource.TELEGRAM,
@@ -265,8 +265,8 @@ def f6_push_button_factory() -> ObserverFactory:
     """Return an ``ObserverFactory`` that creates an ``F6_02_01_02PushButtonObserver``.
 
     Emits ``Observable.PUSH_BUTTON`` state changes with the button ID (``"a0"``, ``"b1"``,
-    ``"ab0"``, …) as ``Observation.entity_id`` and the event type (``"click"``, ``"hold"``,
-    ``"double-click"``, ``"pushed"``, ``"released"``) as the value in ``values``.
+    ``"ab0"``, …) as ``Observation.entity_id`` and the event type (``"clicked"``, ``"held"``,
+    ``"double-clicked"``, ``"pushed"``, ``"released"``) as the value in ``values``.
     """
     from ...eep.profile import ObserverFactory
 

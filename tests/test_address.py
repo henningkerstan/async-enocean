@@ -1,4 +1,4 @@
-from enocean_async import Address
+from enocean_async.address import Address
 
 
 def test_conversion():

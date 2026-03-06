@@ -2,9 +2,9 @@ from .cover import COVER_WATCHDOG_TIMEOUT, CoverObserver, cover_factory
 from .metadata import MetaDataObserver
 from .observer import Observer
 from .push_button import (
-    CLICK,
-    DOUBLE_CLICK,
-    HOLD,
+    CLICKED,
+    DOUBLE_CLICKED,
+    HELD,
     PUSHED,
     RELEASED,
     F6_02_01_02PushButtonObserver,
@@ -24,9 +24,9 @@ __all__ = [
     "f6_push_button_factory",
     "PUSHED",
     "RELEASED",
-    "CLICK",
-    "DOUBLE_CLICK",
-    "HOLD",
+    "CLICKED",
+    "DOUBLE_CLICKED",
+    "HELD",
     "ScalarObserver",
     "scalar_factory",
 ]
