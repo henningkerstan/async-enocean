@@ -1,7 +1,7 @@
 """A5-38-08: Central command - gateway."""
 
 from ...capabilities.action import Action
-from ...capabilities.dimmer_commands import Dim
+from ...capabilities.commands.dimmer import Dim
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
 from ..profile import EEPDataField, EEPSpecification, EEPTelegram

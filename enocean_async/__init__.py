@@ -7,20 +7,20 @@ __date__ = "2026-03-01"
 
 from .address import EURID, Address, BaseAddress, BroadcastAddress, SenderAddress
 from .capabilities.action import Action
-from .capabilities.command import Command
-from .capabilities.cover_commands import QueryCoverPosition, SetCoverPosition, StopCover
-from .capabilities.dimmer_commands import Dim
-from .capabilities.fan_commands import SetFanSpeed
+from .capabilities.commands.base import Command
+from .capabilities.commands.cover import QueryCoverPosition, SetCoverPosition, StopCover
+from .capabilities.commands.dimmer import Dim
+from .capabilities.commands.fan import SetFanSpeed
+from .capabilities.commands.switch import (
+    QueryActuatorMeasurement,
+    QueryActuatorStatus,
+    SetSwitchOutput,
+)
 from .capabilities.observable import Observable
 from .capabilities.state_change import (
     EntityStateChange,
     EntityStateChangeCallback,
     EntityStateChangeSource,
-)
-from .capabilities.switch_commands import (
-    QueryActuatorMeasurement,
-    QueryActuatorStatus,
-    SetSwitchOutput,
 )
 from .device.device import Device
 from .eep import EEP_SPECIFICATIONS

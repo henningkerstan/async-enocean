@@ -1,7 +1,7 @@
 """A5-07-03: Occupancy with supply voltage monitor and 10-bit illumination measurement."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import scalar_factory
+from ...capabilities.observers.scalar import scalar_factory
 from ..id import EEP
 from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 

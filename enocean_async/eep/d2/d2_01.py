@@ -13,13 +13,13 @@ implemented, so dimming-limits sub-telegrams are registered under synthetic keys
 from dataclasses import dataclass
 
 from ...capabilities.action import Action
-from ...capabilities.observable import Observable
-from ...capabilities.scalar import scalar_factory
-from ...capabilities.switch_commands import (
+from ...capabilities.commands.switch import (
     QueryActuatorMeasurement,
     QueryActuatorStatus,
     SetSwitchOutput,
 )
+from ...capabilities.observable import Observable
+from ...capabilities.observers.scalar import scalar_factory
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
 from ..profile import EEPDataField, EEPSpecification, EEPTelegram

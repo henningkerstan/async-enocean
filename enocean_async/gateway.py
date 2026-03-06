@@ -7,8 +7,8 @@ from typing import Callable, Optional
 import serial_asyncio_fast as serial_asyncio
 
 from .address import EURID, BaseAddress, SenderAddress
-from .capabilities.command import Command
-from .capabilities.metadata import MetaDataObserver
+from .capabilities.commands.base import Command
+from .capabilities.observers.metadata import MetaDataObserver
 from .capabilities.state_change import EntityStateChange, EntityStateChangeCallback
 from .device.device import Device
 from .eep import EEP_SPECIFICATIONS

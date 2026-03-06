@@ -5,7 +5,7 @@ The outbound direction (controller → actuator, command) is not yet implemented
 """
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import scalar_factory
+from ...capabilities.observers.scalar import scalar_factory
 from ..id import EEP
 from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 

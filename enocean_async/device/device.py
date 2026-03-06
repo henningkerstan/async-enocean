@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 from ..address import EURID, BaseAddress, SenderAddress
-from ..capabilities.capability import Observer
+from ..capabilities.observers.base import Observer
 from ..eep.id import EEP
 
 

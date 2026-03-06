@@ -9,7 +9,7 @@ Profiles in this module:
 """
 
 from ...capabilities.observable import Observable
-from ...capabilities.push_button import f6_push_button_factory
+from ...capabilities.observers.push_button import f6_push_button_factory
 from ..id import EEP
 from ..profile import EEPDataField, Entity, SimpleProfileSpecification
 

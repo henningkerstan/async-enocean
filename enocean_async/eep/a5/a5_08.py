@@ -1,7 +1,7 @@
 """A5-08-XX: Light, temperature and occupancy sensors."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import scalar_factory
+from ...capabilities.observers.scalar import scalar_factory
 from ..id import EEP
 from ..manufacturer import Manufacturer
 from ..profile import EEPDataField, Entity, SimpleProfileSpecification

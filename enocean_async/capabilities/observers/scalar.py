@@ -1,13 +1,18 @@
 """Generic scalar observer driven by observable annotation on EEP fields."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from time import time
+from typing import TYPE_CHECKING
 
-from ..eep.message import EEPMessage
-from ..eep.profile import ObserverFactory
-from .capability import Observer
-from .observable import Observable
-from .state_change import EntityStateChange, EntityStateChangeSource
+from .base import Observer
+
+if TYPE_CHECKING:
+    from ...eep.message import EEPMessage
+    from ...eep.profile import ObserverFactory
+from ..observable import Observable
+from ..state_change import EntityStateChange, EntityStateChangeSource
 
 
 @dataclass
@@ -73,6 +78,8 @@ def scalar_factory(
         entity_id_field: Optional field ID to read the entity ID from (e.g. ``"I/O"`` for D2-01).
         entity_id_not_applicable: Raw field value meaning "not channel-specific"; falls back to entity_id.
     """
+    from ...eep.profile import ObserverFactory
+
     return ObserverFactory(
         factory=lambda addr, cb: ScalarObserver(
             device_address=addr,

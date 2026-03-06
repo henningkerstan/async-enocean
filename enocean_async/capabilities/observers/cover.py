@@ -1,13 +1,18 @@
+from __future__ import annotations
+
 import asyncio
 from dataclasses import dataclass, field
 import logging
 from time import time
+from typing import TYPE_CHECKING
 
-from ..eep.message import EEPMessage
-from ..eep.profile import ObserverFactory
-from .capability import Observer
-from .observable import Observable
-from .state_change import EntityStateChange, EntityStateChangeSource
+from ..observable import Observable
+from ..state_change import EntityStateChange, EntityStateChangeSource
+from .base import Observer
+
+if TYPE_CHECKING:
+    from ...eep.message import EEPMessage
+    from ...eep.profile import ObserverFactory
 
 # Watchdog timeout in seconds to detect when cover movement has stopped
 COVER_WATCHDOG_TIMEOUT = 1.5
@@ -137,6 +142,8 @@ CoverCapability = CoverObserver
 
 def cover_factory() -> ObserverFactory:
     """Return an ``ObserverFactory`` that creates a ``CoverObserver``."""
+    from ...eep.profile import ObserverFactory
+
     return ObserverFactory(
         factory=lambda addr, cb: CoverObserver(device_address=addr, on_state_change=cb),
     )

@@ -1,7 +1,7 @@
 """D2-20-02: Fan control, type 0x02."""
 
 from ...capabilities.action import Action
-from ...capabilities.fan_commands import SetFanSpeed
+from ...capabilities.commands.fan import SetFanSpeed
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
 from ..profile import EEPDataField, EEPSpecification, EEPTelegram

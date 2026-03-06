@@ -1,31 +1,32 @@
 from .action import Action
-from .capability import Observer
-from .command import Command
-from .cover_commands import QueryCoverPosition, SetCoverPosition, StopCover
-from .dimmer_commands import Dim
-from .fan_commands import SetFanSpeed
-from .metadata import MetaDataObserver
+from .commands.base import Command
+from .commands.cover import QueryCoverPosition, SetCoverPosition, StopCover
+from .commands.dimmer import Dim
+from .commands.fan import SetFanSpeed
+from .commands.switch import (
+    QueryActuatorMeasurement,
+    QueryActuatorStatus,
+    SetSwitchOutput,
+)
 from .observable import Observable
-from .position_angle import CoverObserver
-from .push_button import F6_02_01_02PushButtonObserver, PushButtonObserver
-from .scalar import ScalarObserver
+from .observers.cover import CoverObserver
+from .observers.metadata import MetaDataObserver
+from .observers.push_button import F6_02_01_02PushButtonObserver, PushButtonObserver
+from .observers.scalar import ScalarObserver
 from .state_change import (
     EntityStateChange,
     EntityStateChangeCallback,
     EntityStateChangeSource,
 )
-from .switch_commands import (
-    QueryActuatorMeasurement,
-    QueryActuatorStatus,
-    SetSwitchOutput,
-)
 
 __all__ = [
     "Action",
-    "Observer",
     "Command",
     "CoverObserver",
     "Dim",
+    "EntityStateChange",
+    "EntityStateChangeCallback",
+    "EntityStateChangeSource",
     "F6_02_01_02PushButtonObserver",
     "MetaDataObserver",
     "Observable",
@@ -37,8 +38,5 @@ __all__ = [
     "SetCoverPosition",
     "SetFanSpeed",
     "SetSwitchOutput",
-    "EntityStateChange",
-    "EntityStateChangeCallback",
-    "EntityStateChangeSource",
     "StopCover",
 ]

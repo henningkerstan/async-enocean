@@ -1,11 +1,16 @@
 """Metadata observer providing RSSI and last_seen timestamp."""
 
-from time import time
+from __future__ import annotations
 
-from ..eep.message import EEPMessage
-from .capability import Observer
-from .observable import Observable
-from .state_change import EntityStateChange, EntityStateChangeSource
+from time import time
+from typing import TYPE_CHECKING
+
+from .base import Observer
+
+if TYPE_CHECKING:
+    from ...eep.message import EEPMessage
+from ..observable import Observable
+from ..state_change import EntityStateChange, EntityStateChangeSource
 
 
 class MetaDataObserver(Observer):

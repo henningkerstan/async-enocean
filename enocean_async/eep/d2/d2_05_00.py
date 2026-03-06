@@ -1,13 +1,13 @@
 """D2-05-00: Blinds control for position and angle, type 0x00."""
 
 from ...capabilities.action import Action
-from ...capabilities.cover_commands import (
+from ...capabilities.commands.cover import (
     QueryCoverPosition,
     SetCoverPosition,
     StopCover,
 )
 from ...capabilities.observable import Observable
-from ...capabilities.position_angle import cover_factory
+from ...capabilities.observers.cover import cover_factory
 from ..id import EEP
 from ..message import EEPMessage, EEPMessageType, EEPMessageValue
 from ..profile import EEPDataField, EEPSpecification, EEPTelegram, Entity

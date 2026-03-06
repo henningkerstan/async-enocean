@@ -3,8 +3,8 @@
 from dataclasses import dataclass
 from typing import ClassVar
 
-from .action import Action
-from .command import Command
+from ..action import Action
+from .base import Command
 
 
 @dataclass

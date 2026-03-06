@@ -1,7 +1,7 @@
 """A5-06-XX: Light sensors."""
 
 from ...capabilities.observable import Observable
-from ...capabilities.scalar import scalar_factory
+from ...capabilities.observers.scalar import scalar_factory
 from ..id import EEP
 from ..manufacturer import Manufacturer
 from ..message import EEPMessageValue

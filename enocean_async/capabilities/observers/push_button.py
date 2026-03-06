@@ -1,12 +1,17 @@
+from __future__ import annotations
+
 import asyncio
 from dataclasses import dataclass, field
 from time import time
+from typing import TYPE_CHECKING
 
-from ..eep.message import EEPMessage
-from ..eep.profile import ObserverFactory
-from .capability import Observer
-from .observable import Observable
-from .state_change import EntityStateChange, EntityStateChangeSource
+from .base import Observer
+
+if TYPE_CHECKING:
+    from ...eep.message import EEPMessage
+    from ...eep.profile import ObserverFactory
+from ..observable import Observable
+from ..state_change import EntityStateChange, EntityStateChangeSource
 
 PUSHED = "pushed"
 RELEASED = "released"
@@ -267,6 +272,8 @@ def f6_push_button_factory() -> ObserverFactory:
     ``"ab0"``, …) as ``EntityStateChange.entity_id`` and the event type (``"click"``, ``"hold"``,
     ``"double-click"``, ``"pushed"``, ``"released"``) as the value in ``values``.
     """
+    from ...eep.profile import ObserverFactory
+
     return ObserverFactory(
         factory=lambda addr, cb: F6_02_01_02PushButtonObserver(
             device_address=addr, on_state_change=cb

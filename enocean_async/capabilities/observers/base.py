@@ -5,11 +5,11 @@ import asyncio
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
-from ..address import Address
-from .state_change import EntityStateChange, EntityStateChangeCallback
+from ...address import Address
+from ..state_change import EntityStateChange, EntityStateChangeCallback
 
 if TYPE_CHECKING:
-    from ..eep.message import EEPMessage
+    from ...eep.message import EEPMessage
 
 
 @dataclass
