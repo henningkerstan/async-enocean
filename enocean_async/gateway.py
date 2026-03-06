@@ -7,7 +7,7 @@ from typing import Callable, Optional
 import serial_asyncio_fast as serial_asyncio
 
 from .address import EURID, BaseAddress, SenderAddress
-from .device.device import Device
+from .device import Device
 from .eep import EEP_SPECIFICATIONS
 from .eep.handler import EEPHandler
 from .eep.id import EEP
@@ -25,11 +25,10 @@ from .protocol.esp3.common_command import CommonCommandTelegram
 from .protocol.esp3.packet import ESP3Packet, ESP3PacketType
 from .protocol.esp3.protocol import EnOceanSerialProtocol3
 from .protocol.esp3.response import ResponseCode, ResponseTelegram
+from .protocol.version import VersionIdentifier, VersionInfo
 from .semantics.instruction import Instruction
 from .semantics.observation import Observation, ObservationCallback
 from .semantics.observers.metadata import MetaDataObserver
-from .version.id import VersionIdentifier
-from .version.info import VersionInfo
 
 type RSSI = int
 

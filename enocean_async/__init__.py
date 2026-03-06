@@ -6,7 +6,7 @@ __version__ = "0.4.1"
 __date__ = "2026-03-01"
 
 from .address import EURID, Address, BaseAddress, BroadcastAddress, SenderAddress
-from .device.device import Device
+from .device import Device
 from .eep import EEP_SPECIFICATIONS
 from .eep.handler import EEPHandler
 from .eep.id import EEP

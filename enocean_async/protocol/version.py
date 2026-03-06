@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from ..address import EURID
+
 
 @dataclass
 class VersionIdentifier:
@@ -11,3 +13,12 @@ class VersionIdentifier:
     @property
     def version_string(self) -> str:
         return f"{self.main}.{self.beta}.{self.alpha}{f'b{self.build}' if self.build else ''}"
+
+
+@dataclass
+class VersionInfo:
+    app_version: VersionIdentifier
+    api_version: VersionIdentifier
+    eurid: EURID
+    device_version: int
+    app_description: str

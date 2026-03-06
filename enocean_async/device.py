@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 
-from ..address import EURID, BaseAddress, SenderAddress
-from ..eep.id import EEP
-from ..semantics.observers.observer import Observer
+from .address import EURID, BaseAddress, SenderAddress
+from .eep.id import EEP
+from .semantics.observers.observer import Observer
 
 
 @dataclass
