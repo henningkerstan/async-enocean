@@ -7,9 +7,9 @@ that individual test modules can compose them freely.
 import pytest
 
 from enocean_async.address import EURID, BaseAddress
-from enocean_async.erp1.rorg import RORG
-from enocean_async.erp1.telegram import ERP1Telegram
-from enocean_async.esp3.packet import SYNC_BYTE, crc8
+from enocean_async.protocol.erp1.rorg import RORG
+from enocean_async.protocol.erp1.telegram import ERP1Telegram
+from enocean_async.protocol.esp3.packet import SYNC_BYTE, crc8
 from enocean_async.semantics.observation import Observation
 
 # ---------------------------------------------------------------------------

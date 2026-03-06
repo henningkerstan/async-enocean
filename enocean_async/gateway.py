@@ -14,17 +14,17 @@ from .eep.id import EEP
 from .eep.manufacturer import Manufacturer
 from .eep.message import EEPMessage
 from .eep.profile import DeviceDescriptor
-from .erp1.telegram import RORG, ERP1Telegram, FourBSTeachInTelegram
-from .erp1.ute import (
+from .protocol.erp1.telegram import RORG, ERP1Telegram, FourBSTeachInTelegram
+from .protocol.erp1.ute import (
     EEPTeachInResponseMessageExpectation,
     UTEMessage,
     UTEQueryRequestType,
     UTEResponseType,
 )
-from .esp3.common_command import CommonCommandTelegram
-from .esp3.packet import ESP3Packet, ESP3PacketType
-from .esp3.protocol import EnOceanSerialProtocol3
-from .esp3.response import ResponseCode, ResponseTelegram
+from .protocol.esp3.common_command import CommonCommandTelegram
+from .protocol.esp3.packet import ESP3Packet, ESP3PacketType
+from .protocol.esp3.protocol import EnOceanSerialProtocol3
+from .protocol.esp3.response import ResponseCode, ResponseTelegram
 from .semantics.instruction import Instruction
 from .semantics.observation import Observation, ObservationCallback
 from .semantics.observers.metadata import MetaDataObserver

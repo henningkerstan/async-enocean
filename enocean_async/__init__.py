@@ -20,10 +20,10 @@ from .eep.profile import (
     Entity,
     SimpleProfileSpecification,
 )
-from .erp1.errors import ERP1ParseError
-from .erp1.rorg import RORG
-from .erp1.telegram import ERP1Telegram
 from .gateway import Gateway
+from .protocol.erp1.errors import ERP1ParseError
+from .protocol.erp1.rorg import RORG
+from .protocol.erp1.telegram import ERP1Telegram
 from .semantics.instructable import Instructable
 from .semantics.instruction import Instruction
 from .semantics.instructions.cover import (

@@ -8,7 +8,7 @@ if TYPE_CHECKING:
 
 import serial_asyncio_fast as serial_asyncio
 
-from enocean_async.esp3.response import ResponseTelegram
+from enocean_async.protocol.esp3.response import ResponseTelegram
 
 from .packet import SYNC_BYTE, ESP3Packet, ESP3PacketType, crc8
 

@@ -1,6 +1,6 @@
 from enocean_async.address import BroadcastAddress
 
-from ..erp1.telegram import RORG, ERP1Telegram
+from ..protocol.erp1.telegram import RORG, ERP1Telegram
 from .message import EEPMessage, EEPMessageType, EEPMessageValue, EntityValue
 from .profile import EEPSpecification
 

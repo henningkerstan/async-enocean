@@ -2,11 +2,11 @@ from dataclasses import dataclass
 from enum import IntEnum
 from typing import Optional
 
-from ..address import EURID, SenderAddress
-from ..eep.id import EEP
-from ..eep.manufacturer import Manufacturer
-from ..erp1.rorg import RORG
-from ..erp1.telegram import ERP1Telegram
+from ...address import EURID, SenderAddress
+from ...eep.id import EEP
+from ...eep.manufacturer import Manufacturer
+from .rorg import RORG
+from .telegram import ERP1Telegram
 
 
 class UTEQueryRequestType(IntEnum):

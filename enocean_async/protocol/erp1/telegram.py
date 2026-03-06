@@ -3,8 +3,8 @@ from enum import IntEnum
 
 from enocean_async.eep.manufacturer import Manufacturer
 
-from ..address import EURID, Address, BaseAddress, BroadcastAddress
-from ..eep.id import EEP
+from ...address import EURID, Address, BaseAddress, BroadcastAddress
+from ...eep.id import EEP
 from ..esp3.packet import ESP3Packet, ESP3PacketType
 from .errors import ERP1ParseError
 from .rorg import RORG
