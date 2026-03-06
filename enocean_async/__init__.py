@@ -17,10 +17,10 @@ from .capabilities.commands.switch import (
     SetSwitchOutput,
 )
 from .capabilities.observable import Observable
-from .capabilities.state_change import (
-    EntityStateChange,
-    EntityStateChangeCallback,
-    EntityStateChangeSource,
+from .capabilities.observation import (
+    Observation,
+    ObservationCallback,
+    ObservationSource,
 )
 from .device.device import Device
 from .eep import EEP_SPECIFICATIONS
@@ -61,9 +61,9 @@ __all__ = [
     "SetSwitchOutput",
     "StopCover",
     # State changes
-    "EntityStateChange",
-    "EntityStateChangeCallback",
-    "EntityStateChangeSource",
+    "Observation",
+    "ObservationCallback",
+    "ObservationSource",
     "Entity",
     # Device and gateway
     "Device",

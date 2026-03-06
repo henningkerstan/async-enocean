@@ -1,6 +1,6 @@
 """EnOcean device management."""
 
-from ..capabilities.state_change import EntityStateChange
+from ..capabilities.observation import Observation
 from .device import Device
 
-__all__ = ["Device", "EntityStateChange"]
+__all__ = ["Device", "Observation"]

@@ -10,7 +10,7 @@ from .base import Observer
 if TYPE_CHECKING:
     from ...eep.message import EEPMessage
 from ..observable import Observable
-from ..state_change import EntityStateChange, EntityStateChangeSource
+from ..observation import Observation, ObservationSource
 
 
 class MetaDataObserver(Observer):
@@ -35,33 +35,33 @@ class MetaDataObserver(Observer):
         # Emit RSSI if available
         if message.rssi is not None:
             self._emit(
-                EntityStateChange(
+                Observation(
                     device_id=self.device_address,
                     entity_id="rssi",
                     values={Observable.RSSI: message.rssi},
                     timestamp=timestamp,
-                    source=EntityStateChangeSource.TELEGRAM,
+                    source=ObservationSource.TELEGRAM,
                 )
             )
 
         # Always emit last_seen timestamp
         self._emit(
-            EntityStateChange(
+            Observation(
                 device_id=self.device_address,
                 entity_id="last_seen",
                 values={Observable.LAST_SEEN: timestamp},
                 timestamp=timestamp,
-                source=EntityStateChangeSource.TELEGRAM,
+                source=ObservationSource.TELEGRAM,
             )
         )
 
         # Always emit telegram count
         self._emit(
-            EntityStateChange(
+            Observation(
                 device_id=self.device_address,
                 entity_id="telegram_count",
                 values={Observable.TELEGRAM_COUNT: self._telegram_count},
                 timestamp=timestamp,
-                source=EntityStateChangeSource.TELEGRAM,
+                source=ObservationSource.TELEGRAM,
             )
         )

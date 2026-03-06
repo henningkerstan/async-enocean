@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from ...eep.message import EEPMessage
     from ...eep.profile import ObserverFactory
 from ..observable import Observable
-from ..state_change import EntityStateChange, EntityStateChangeSource
+from ..observation import Observation, ObservationSource
 
 
 @dataclass
@@ -49,12 +49,12 @@ class ScalarObserver(Observer):
             return
 
         self._emit(
-            EntityStateChange(
+            Observation(
                 device_id=self.device_address,
                 entity_id=self._resolve_entity_id(message),
                 values={self.observable: v.value},
                 timestamp=time(),
-                source=EntityStateChangeSource.TELEGRAM,
+                source=ObservationSource.TELEGRAM,
             )
         )
 

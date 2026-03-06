@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
 from ...address import Address
-from ..state_change import EntityStateChange, EntityStateChangeCallback
+from ..observation import EntityStateChangeCallback, Observation
 
 if TYPE_CHECKING:
     from ...eep.message import EEPMessage
@@ -35,7 +35,7 @@ class Observer(ABC):
         """Implementation of decode logic. Override in subclasses."""
         raise NotImplementedError("Subclasses must implement the _decode_impl method.")
 
-    def _emit(self, state_change: EntityStateChange) -> None:
+    def _emit(self, state_change: Observation) -> None:
         """Emit a state change via callback, scheduled on the running event loop."""
         if self.on_state_change:
             asyncio.get_running_loop().call_soon(self.on_state_change, state_change)

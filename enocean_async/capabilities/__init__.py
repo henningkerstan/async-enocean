@@ -9,24 +9,20 @@ from .commands.switch import (
     SetSwitchOutput,
 )
 from .observable import Observable
+from .observation import Observation, ObservationCallback, ObservationSource
 from .observers.cover import CoverObserver
 from .observers.metadata import MetaDataObserver
 from .observers.push_button import F6_02_01_02PushButtonObserver, PushButtonObserver
 from .observers.scalar import ScalarObserver
-from .state_change import (
-    EntityStateChange,
-    EntityStateChangeCallback,
-    EntityStateChangeSource,
-)
 
 __all__ = [
     "Action",
     "Command",
     "CoverObserver",
     "Dim",
-    "EntityStateChange",
-    "EntityStateChangeCallback",
-    "EntityStateChangeSource",
+    "Observation",
+    "ObservationCallback",
+    "ObservationSource",
     "F6_02_01_02PushButtonObserver",
     "MetaDataObserver",
     "Observable",

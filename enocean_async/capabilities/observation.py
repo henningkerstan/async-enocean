@@ -6,16 +6,16 @@ from typing import Any, Callable
 from ..address import SenderAddress
 from .observable import Observable
 
-type EntityStateChangeCallback = Callable[["EntityStateChange"], None]
+type ObservationCallback = Callable[["Observation"], None]
 
 
-class EntityStateChangeSource(IntEnum):
+class ObservationSource(IntEnum):
     TELEGRAM = 0
     TIMER = 1
 
 
 @dataclass
-class EntityStateChange:
+class Observation:
     """A semantic update emitted by a Capability for one entity.
 
     ``values`` contains all observable values reported in this telegram (or timer event).
@@ -29,4 +29,4 @@ class EntityStateChange:
     values: dict[Observable, Any]
     timestamp: float = field(default_factory=time)
     time_elapsed: float = 0
-    source: EntityStateChangeSource = EntityStateChangeSource.TELEGRAM
+    source: ObservationSource = ObservationSource.TELEGRAM

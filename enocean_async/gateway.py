@@ -8,8 +8,8 @@ import serial_asyncio_fast as serial_asyncio
 
 from .address import EURID, BaseAddress, SenderAddress
 from .capabilities.commands.base import Command
+from .capabilities.observation import Observation, ObservationCallback
 from .capabilities.observers.metadata import MetaDataObserver
-from .capabilities.state_change import EntityStateChange, EntityStateChangeCallback
 from .device.device import Device
 from .eep import EEP_SPECIFICATIONS
 from .eep.handler import EEPHandler
@@ -17,12 +17,7 @@ from .eep.id import EEP
 from .eep.manufacturer import Manufacturer
 from .eep.message import EEPMessage
 from .eep.profile import DeviceDescriptor
-from .erp1.telegram import (
-    RORG,
-    ERP1Telegram,
-    FourBSTeachInTelegram,
-    FourBSTeachInVariation,
-)
+from .erp1.telegram import RORG, ERP1Telegram, FourBSTeachInTelegram
 from .erp1.ute import (
     EEPTeachInResponseMessageExpectation,
     UTEMessage,
@@ -98,7 +93,7 @@ class Gateway:
         self.__detected_devices: list[EURID | BaseAddress] = []
         self.__eep_handlers: dict[EEP, EEPHandler] = {}
         self.__devices: dict[EURID | BaseAddress, Device] = {}
-        self.__state_change_callbacks: list[EntityStateChangeCallback] = []
+        self.__state_change_callbacks: list[ObservationCallback] = []
 
         # callbacks
         self.__esp3_receive_callbacks: list[ESP3Callback] = []
@@ -504,7 +499,7 @@ class Gateway:
             f"Initialized device {address} with {len(device.capabilities)} capabilities"
         )
 
-    def __on_capability_state_change(self, state_change: EntityStateChange) -> None:
+    def __on_capability_state_change(self, state_change: Observation) -> None:
         """Internal callback for capability state changes."""
         self.__emit(self.__state_change_callbacks, state_change)
 

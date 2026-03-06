@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from ...eep.message import EEPMessage
     from ...eep.profile import ObserverFactory
 from ..observable import Observable
-from ..state_change import EntityStateChange, EntityStateChangeSource
+from ..observation import Observation, ObservationSource
 
 PUSHED = "pushed"
 RELEASED = "released"
@@ -51,13 +51,13 @@ class PushButtonObserver(Observer):
             self._button_held[button_id] = True
 
             self._emit(
-                EntityStateChange(
+                Observation(
                     device_id=self.device_address,
                     entity_id=button_id,
                     values={Observable.PUSH_BUTTON: HOLD},
                     timestamp=time(),
                     time_elapsed=duration,
-                    source=EntityStateChangeSource.TIMER,
+                    source=ObservationSource.TIMER,
                 )
             )
 
@@ -75,13 +75,13 @@ class PushButtonObserver(Observer):
             del self._hold_tasks[button_id]
 
         self._emit(
-            EntityStateChange(
+            Observation(
                 device_id=self.device_address,
                 entity_id=button_id,
                 values={Observable.PUSH_BUTTON: RELEASED},
                 timestamp=time(),
                 time_elapsed=duration,
-                source=EntityStateChangeSource.TIMER,
+                source=ObservationSource.TIMER,
             )
         )
 
@@ -112,12 +112,12 @@ class PushButtonObserver(Observer):
         self._release_tasks[button_id] = timeout_task
 
         self._emit(
-            EntityStateChange(
+            Observation(
                 device_id=self.device_address,
                 entity_id=button_id,
                 values={Observable.PUSH_BUTTON: PUSHED},
                 timestamp=current_time,
-                source=EntityStateChangeSource.TELEGRAM,
+                source=ObservationSource.TELEGRAM,
             )
         )
 
@@ -126,12 +126,12 @@ class PushButtonObserver(Observer):
         press_time = self._button_press_times.get(button_id)
         if press_time is None:
             self._emit(
-                EntityStateChange(
+                Observation(
                     device_id=self.device_address,
                     entity_id=button_id,
                     values={Observable.PUSH_BUTTON: RELEASED},
                     timestamp=current_time,
-                    source=EntityStateChangeSource.TELEGRAM,
+                    source=ObservationSource.TELEGRAM,
                 )
             )
             return
@@ -154,37 +154,37 @@ class PushButtonObserver(Observer):
 
             if 0 < time_since_last_click <= self.double_click_window:
                 self._emit(
-                    EntityStateChange(
+                    Observation(
                         device_id=self.device_address,
                         entity_id=button_id,
                         values={Observable.PUSH_BUTTON: DOUBLE_CLICK},
                         timestamp=current_time,
                         time_elapsed=duration,
-                        source=EntityStateChangeSource.TELEGRAM,
+                        source=ObservationSource.TELEGRAM,
                     )
                 )
                 self._last_click_times[button_id] = 0
             else:
                 self._emit(
-                    EntityStateChange(
+                    Observation(
                         device_id=self.device_address,
                         entity_id=button_id,
                         values={Observable.PUSH_BUTTON: CLICK},
                         timestamp=current_time,
                         time_elapsed=duration,
-                        source=EntityStateChangeSource.TELEGRAM,
+                        source=ObservationSource.TELEGRAM,
                     )
                 )
                 self._last_click_times[button_id] = current_time
 
         self._emit(
-            EntityStateChange(
+            Observation(
                 device_id=self.device_address,
                 entity_id=button_id,
                 values={Observable.PUSH_BUTTON: RELEASED},
                 timestamp=current_time,
                 time_elapsed=duration,
-                source=EntityStateChangeSource.TELEGRAM,
+                source=ObservationSource.TELEGRAM,
             )
         )
 

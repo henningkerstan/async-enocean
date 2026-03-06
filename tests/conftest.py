@@ -7,7 +7,7 @@ that individual test modules can compose them freely.
 import pytest
 
 from enocean_async.address import EURID, BaseAddress
-from enocean_async.capabilities.state_change import EntityStateChange
+from enocean_async.capabilities.observation import Observation
 from enocean_async.erp1.rorg import RORG
 from enocean_async.erp1.telegram import ERP1Telegram
 from enocean_async.esp3.packet import SYNC_BYTE, crc8
@@ -33,13 +33,13 @@ def base_address() -> BaseAddress:
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def state_changes() -> tuple[list[EntityStateChange], callable]:
+def state_changes() -> tuple[list[Observation], callable]:
     """Returns (received_list, callback).
 
     Pass *callback* as ``on_state_change`` to any Capability; all emitted
     StateChange objects accumulate in *received_list*.
     """
-    received: list[EntityStateChange] = []
+    received: list[Observation] = []
     return received, received.append
 
 

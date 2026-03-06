@@ -7,7 +7,7 @@ from time import time
 from typing import TYPE_CHECKING
 
 from ..observable import Observable
-from ..state_change import EntityStateChange, EntityStateChangeSource
+from ..observation import Observation, ObservationSource
 from .base import Observer
 
 if TYPE_CHECKING:
@@ -77,12 +77,12 @@ class CoverObserver(Observer):
 
         if values:
             self._emit(
-                EntityStateChange(
+                Observation(
                     device_id=self.device_address,
                     entity_id="cover",
                     values=values,
                     timestamp=current_time,
-                    source=EntityStateChangeSource.TELEGRAM,
+                    source=ObservationSource.TELEGRAM,
                 )
             )
 
@@ -98,12 +98,12 @@ class CoverObserver(Observer):
             await asyncio.sleep(COVER_WATCHDOG_TIMEOUT)
             # Timeout elapsed, emit stopped state
             self._emit(
-                EntityStateChange(
+                Observation(
                     device_id=self.device_address,
                     entity_id="cover",
                     values={Observable.COVER_STATE: "stopped"},
                     timestamp=time(),
-                    source=EntityStateChangeSource.TIMER,
+                    source=ObservationSource.TIMER,
                 )
             )
             self._current_cover_state = "stopped"
