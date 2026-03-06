@@ -4,8 +4,8 @@ import logging
 from time import time
 
 from ..eep.message import EEPMessage
-from ..eep.profile import CapabilityFactory
-from .capability import Capability
+from ..eep.profile import ObserverFactory
+from .capability import Observer
 from .observable import Observable
 from .state_change import EntityStateChange, EntityStateChangeSource
 
@@ -16,8 +16,8 @@ _logger = logging.getLogger(__name__)
 
 
 @dataclass
-class CoverCapability(Capability):
-    """Capability that emits position and angle updates for blinds/cover devices."""
+class CoverObserver(Observer):
+    """Observer that emits position and angle updates for blinds/cover devices."""
 
     _previous_position: int | None = field(default=None, init=False, repr=False)
     """Track previous position to derive cover state from movement."""
@@ -131,10 +131,12 @@ class CoverCapability(Capability):
             return "stopped"  # No change in position, state remains the same
 
 
-def cover_factory() -> CapabilityFactory:
-    """Return a ``CapabilityFactory`` that creates a ``CoverCapability``."""
-    return CapabilityFactory(
-        factory=lambda addr, cb: CoverCapability(
-            device_address=addr, on_state_change=cb
-        ),
+# Backward-compatible alias
+CoverCapability = CoverObserver
+
+
+def cover_factory() -> ObserverFactory:
+    """Return an ``ObserverFactory`` that creates a ``CoverObserver``."""
+    return ObserverFactory(
+        factory=lambda addr, cb: CoverObserver(device_address=addr, on_state_change=cb),
     )

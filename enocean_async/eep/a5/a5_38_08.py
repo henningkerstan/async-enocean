@@ -90,7 +90,7 @@ EEP_A5_38_08 = EEPSpecification(
             ],
         )
     },
-    command_encoders={
+    encoders={
         Action.DIM: _encode_dim,
     },
 )

@@ -32,7 +32,7 @@ class _EEP_A5_02(SimpleProfileSpecification):
                     observable=Observable.TEMPERATURE,
                 )
             ],
-            capability_factories=[scalar_factory(Observable.TEMPERATURE)],
+            observers=[scalar_factory(Observable.TEMPERATURE)],
             entities=_ENTITIES,
         )
 

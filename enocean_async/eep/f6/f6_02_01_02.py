@@ -77,7 +77,7 @@ EEP_F6_02_01 = SimpleProfileSpecification(
     eep=EEP.from_string("F6-02-01"),
     name="Light and blind control - application style 1",
     datafields=_F6_02_DATAFIELDS,
-    capability_factories=_F6_02_FACTORIES,
+    observers=_F6_02_FACTORIES,
     entities=_F6_02_ENTITIES,
 )
 
@@ -85,6 +85,6 @@ EEP_F6_02_02 = SimpleProfileSpecification(
     eep=EEP.from_string("F6-02-02"),
     name="Light and blind control - application style 2",
     datafields=_F6_02_DATAFIELDS,
-    capability_factories=_F6_02_FACTORIES,
+    observers=_F6_02_FACTORIES,
     entities=_F6_02_ENTITIES,
 )

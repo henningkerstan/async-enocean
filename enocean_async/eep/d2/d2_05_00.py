@@ -235,8 +235,8 @@ EEP_D2_05_00 = EEPSpecification(
             ],
         ),
     },
-    capability_factories=[cover_factory()],
-    command_encoders={
+    observers=[cover_factory()],
+    encoders={
         Action.SET_COVER_POSITION: _encode_set_position,
         Action.STOP_COVER: _encode_stop,
         Action.QUERY_COVER_POSITION: _encode_query_position,

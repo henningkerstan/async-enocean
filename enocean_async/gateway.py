@@ -8,7 +8,7 @@ import serial_asyncio_fast as serial_asyncio
 
 from .address import EURID, BaseAddress, SenderAddress
 from .capabilities.command import Command
-from .capabilities.metadata import MetaDataCapability
+from .capabilities.metadata import MetaDataObserver
 from .capabilities.state_change import EntityStateChange, EntityStateChangeCallback
 from .device.device import Device
 from .eep import EEP_SPECIFICATIONS
@@ -383,7 +383,7 @@ class Gateway:
             raise ValueError(f"No EEP handler loaded for {eep_id}")
 
         spec = EEP_SPECIFICATIONS[eep_id]
-        if command.action not in spec.command_encoders:
+        if command.action not in spec.encoders:
             raise ValueError(
                 f"Command '{command.action}' is not supported for EEP {eep_id}"
             )
@@ -400,7 +400,7 @@ class Gateway:
                 "Could not determine sender address; pass sender= explicitly or connect first"
             )
 
-        message: EEPMessage = spec.command_encoders[command.action](command)
+        message: EEPMessage = spec.encoders[command.action](command)
         message.sender = sender
         message.destination = destination
 
@@ -479,17 +479,17 @@ class Gateway:
         else:
             self._logger.debug(f"EEP handler for eep {eep} already loaded.")
 
-        # build capability list from EEP capability_factories
+        # build observer list from EEP observers
         eep = EEP_SPECIFICATIONS[eep]
-        if not eep.capability_factories:
+        if not eep.observers:
             self._logger.debug(
-                f"EEP {eep} has no capability factories; StateChange processing unavailable for device {address}."
+                f"EEP {eep} has no observers; StateChange processing unavailable for device {address}."
             )
             return
 
         cb = self.__on_capability_state_change
-        capabilities = [MetaDataCapability(device_address=address, on_state_change=cb)]
-        for factory in eep.capability_factories:
+        capabilities = [MetaDataObserver(device_address=address, on_state_change=cb)]
+        for factory in eep.observers:
             capabilities.append(factory(address, cb))
 
         device = Device(
@@ -536,6 +536,17 @@ class Gateway:
         if spec is None:
             return None
         return spec.device_descriptor()
+
+    def entities(self) -> dict["EURID | BaseAddress", DeviceDescriptor]:
+        """Return a DeviceDescriptor for every registered device, keyed by address.
+        Devices whose EEP is not in the registry are silently skipped.
+        """
+        result: dict[EURID | BaseAddress, DeviceDescriptor] = {}
+        for address in self.__known_device_eeps:
+            descriptor = self.device_descriptor(address)
+            if descriptor is not None:
+                result[address] = descriptor
+        return result
 
     # ------------------------------------------------------------------
     # Gateway properties and methods

@@ -1,14 +1,14 @@
 from .action import Action
-from .capability import Capability
+from .capability import Observer
 from .command import Command
 from .cover_commands import QueryCoverPosition, SetCoverPosition, StopCover
 from .dimmer_commands import Dim
 from .fan_commands import SetFanSpeed
-from .metadata import MetaDataCapability
+from .metadata import MetaDataObserver
 from .observable import Observable
-from .position_angle import CoverCapability
-from .push_button import F6_02_01_02PushButtonCapability, PushButtonCapability
-from .scalar import ScalarCapability
+from .position_angle import CoverObserver
+from .push_button import F6_02_01_02PushButtonObserver, PushButtonObserver
+from .scalar import ScalarObserver
 from .state_change import (
     EntityStateChange,
     EntityStateChangeCallback,
@@ -22,18 +22,18 @@ from .switch_commands import (
 
 __all__ = [
     "Action",
-    "Capability",
+    "Observer",
     "Command",
-    "CoverCapability",
+    "CoverObserver",
     "Dim",
-    "F6_02_01_02PushButtonCapability",
-    "MetaDataCapability",
+    "F6_02_01_02PushButtonObserver",
+    "MetaDataObserver",
     "Observable",
-    "PushButtonCapability",
+    "PushButtonObserver",
     "QueryActuatorMeasurement",
     "QueryActuatorStatus",
     "QueryCoverPosition",
-    "ScalarCapability",
+    "ScalarObserver",
     "SetCoverPosition",
     "SetFanSpeed",
     "SetSwitchOutput",

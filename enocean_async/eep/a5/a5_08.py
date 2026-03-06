@@ -94,7 +94,7 @@ class _EEP_A5_08(SimpleProfileSpecification):
                     observable=Observable.OCCUPANCY_BUTTON,
                 ),
             ],
-            capability_factories=_FULL_FACTORIES,
+            observers=_FULL_FACTORIES,
             entities=_FULL_ENTITIES,
         )
 
@@ -139,6 +139,6 @@ EEP_A5_08_01_ELTAKO = SimpleProfileSpecification(
             observable=Observable.MOTION,
         ),
     ],
-    capability_factories=_ELTAKO_FACTORIES,
+    observers=_ELTAKO_FACTORIES,
     entities=_ELTAKO_ENTITIES,
 )

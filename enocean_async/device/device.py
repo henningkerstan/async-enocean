@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
 from ..address import EURID, BaseAddress, SenderAddress
-from ..capabilities.capability import Capability
+from ..capabilities.capability import Observer
 from ..eep.id import EEP
 
 
@@ -14,4 +14,4 @@ class Device:
     name: str
     sender: SenderAddress | None = None
     telegrams_received: int = 0
-    capabilities: list[Capability] = field(default_factory=list)
+    capabilities: list[Observer] = field(default_factory=list)

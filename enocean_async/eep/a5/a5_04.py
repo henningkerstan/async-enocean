@@ -57,7 +57,7 @@ class _EEP_A5_04_01_02(SimpleProfileSpecification):
                     },
                 ),
             ],
-            capability_factories=_TEMP_HUM_FACTORIES,
+            observers=_TEMP_HUM_FACTORIES,
             entities=_TEMP_HUM_ENTITIES,
         )
 
@@ -99,7 +99,7 @@ EEP_A5_04_03 = SimpleProfileSpecification(
             },
         ),
     ],
-    capability_factories=_TEMP_HUM_FACTORIES,
+    observers=_TEMP_HUM_FACTORIES,
     entities=_TEMP_HUM_ENTITIES,
 )
 

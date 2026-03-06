@@ -736,9 +736,9 @@ def _spec(type_id: int, name: str, *, dimming: bool = False) -> EEPSpecification
         ecid_offset=8,
         ecid_size=8,
         telegrams=EEP_D2_01_TELEGRAMS,
-        command_encoders=_COMMAND_ENCODERS,
+        encoders=_COMMAND_ENCODERS,
         semantic_resolvers=_DIMMER_RESOLVERS if dimming else _BASE_RESOLVERS,
-        capability_factories=_factories(dimming),
+        observers=_factories(dimming),
     )
 
 

@@ -149,7 +149,7 @@ EEP_D2_20_02 = EEPSpecification(
             ],
         ),
     },
-    command_encoders={
+    encoders={
         Action.SET_FAN_SPEED: _encode_set_fan_speed,
     },
 )

@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 from time import time
 
 from ..eep.message import EEPMessage
-from ..eep.profile import CapabilityFactory
-from .capability import Capability
+from ..eep.profile import ObserverFactory
+from .capability import Observer
 from .observable import Observable
 from .state_change import EntityStateChange, EntityStateChangeSource
 
@@ -16,8 +16,8 @@ HOLD = "hold"
 
 
 @dataclass
-class PushButtonCapability(Capability):
-    """Base capability for button devices.
+class PushButtonObserver(Observer):
+    """Base observer for button devices.
 
     Provides timing-based state machine behavior for:
     - pushed: Initial press event
@@ -192,9 +192,13 @@ class PushButtonCapability(Capability):
         raise NotImplementedError("Subclasses must implement the _decode_impl method.")
 
 
+# Backward-compatible alias
+PushButtonCapability = PushButtonObserver
+
+
 @dataclass
-class F6_02_01_02PushButtonCapability(PushButtonCapability):
-    """Button capability for F6-02-01/02 rocker switches.
+class F6_02_01_02PushButtonObserver(PushButtonObserver):
+    """Button observer for F6-02-01/02 rocker switches.
 
     Handles R1/EB/R2/SA fields from F6-02-01 and F6-02-02 telegrams.
     """
@@ -252,15 +256,19 @@ class F6_02_01_02PushButtonCapability(PushButtonCapability):
                     )
 
 
-def f6_push_button_factory() -> CapabilityFactory:
-    """Return a ``CapabilityFactory`` that creates an ``F6_02_01_02PushButtonCapability``.
+# Backward-compatible alias
+F6_02_01_02PushButtonCapability = F6_02_01_02PushButtonObserver
+
+
+def f6_push_button_factory() -> ObserverFactory:
+    """Return an ``ObserverFactory`` that creates an ``F6_02_01_02PushButtonObserver``.
 
     Emits ``Observable.PUSH_BUTTON`` state changes with the button ID (``"a0"``, ``"b1"``,
     ``"ab0"``, …) as ``EntityStateChange.entity_id`` and the event type (``"click"``, ``"hold"``,
     ``"double-click"``, ``"pushed"``, ``"released"``) as the value in ``values``.
     """
-    return CapabilityFactory(
-        factory=lambda addr, cb: F6_02_01_02PushButtonCapability(
+    return ObserverFactory(
+        factory=lambda addr, cb: F6_02_01_02PushButtonObserver(
             device_address=addr, on_state_change=cb
         ),
     )

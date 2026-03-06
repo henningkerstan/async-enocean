@@ -45,7 +45,7 @@ EEP_A5_07_03 = SimpleProfileSpecification(
             observable=Observable.MOTION,
         ),
     ],
-    capability_factories=[
+    observers=[
         scalar_factory(Observable.VOLTAGE, entity_id="supply_voltage"),
         scalar_factory(Observable.ILLUMINATION),
         scalar_factory(Observable.MOTION),

@@ -1,24 +1,24 @@
-"""Metadata capability providing RSSI and last_seen timestamp."""
+"""Metadata observer providing RSSI and last_seen timestamp."""
 
 from time import time
 
 from ..eep.message import EEPMessage
-from .capability import Capability
+from .capability import Observer
 from .observable import Observable
 from .state_change import EntityStateChange, EntityStateChangeSource
 
 
-class MetaDataCapability(Capability):
-    """Capability providing metadata about received messages (RSSI and last seen timestamp).
+class MetaDataObserver(Observer):
+    """Observer providing metadata about received messages (RSSI and last seen timestamp).
 
-    This capability can be attached to any device type to track:
+    This observer can be attached to any device type to track:
     - RSSI (signal strength) when available
     - Last seen timestamp for every received message
     - Telegram count (number of messages received)
     """
 
     def __init__(self, device_address, on_state_change):
-        """Initialize the metadata capability."""
+        """Initialize the metadata observer."""
         super().__init__(device_address, on_state_change)
         self._telegram_count = 0
 

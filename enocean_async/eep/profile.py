@@ -25,22 +25,22 @@ type TelegramRawValues = dict[str, int]
 type ScaleFunction = Callable[[TelegramRawValues], float]
 type UnitFunction = Callable[[TelegramRawValues], str]
 
-# Type aliases for semantic resolvers and command encoders.
+# Type aliases for semantic resolvers and action encoders.
 # Using Any to avoid circular imports (capabilities/ imports from eep/).
 type SemanticResolver = Callable[[dict[str, Any]], Any | None]
-type CommandEncoder = Callable[[Any], Any]  # Command → EEPMessage
+type ActionEncoder = Callable[[Any], Any]  # Command → EEPMessage
 
 
 @dataclass
-class CapabilityFactory:
-    """Wraps a capability constructor for use in ``EEPSpecification.capability_factories``.
+class ObserverFactory:
+    """Wraps an observer constructor for use in ``EEPSpecification.observers``.
 
     Entity metadata (observables, actions) is now declared separately via
     ``EEPSpecification.entities`` rather than on the factory itself.
     """
 
     factory: Callable[[Any, Any], Any]
-    """Callable that takes ``(device_address, on_state_change)`` and returns a Capability."""
+    """Callable that takes ``(device_address, on_state_change)`` and returns an Observer."""
 
     def __call__(self, device_address: Any, on_state_change: Any) -> Any:
         return self.factory(device_address, on_state_change)
@@ -163,11 +163,11 @@ class EEPSpecification:
     """Dict mapping Observable → resolver function. Each resolver receives the full decoded values dict
     and returns a single EEPMessageValue (or None) to be stored under that Observable key."""
 
-    capability_factories: list[CapabilityFactory] = field(default_factory=list)
-    """Ordered list of capability factory callables. Each factory takes (device_address, on_state_change)
-    and returns a Capability instance. MetaDataCapability is always prepended by the gateway."""
+    observers: list[ObserverFactory] = field(default_factory=list)
+    """Ordered list of observer factory callables. Each factory takes (device_address, on_state_change)
+    and returns an Observer instance. MetaDataObserver is always prepended by the gateway."""
 
-    command_encoders: dict[Action, CommandEncoder] = field(default_factory=dict)
+    encoders: dict[Action, ActionEncoder] = field(default_factory=dict)
     """Dict mapping Action → encoder function. Each encoder takes a Command and returns
     an EEPMessage with message_type.id set and values filled with raw field values (field_id → raw int).
     The gateway sets message.sender and message.destination before calling EEPHandler.encode()."""
@@ -205,8 +205,8 @@ class SimpleProfileSpecification(EEPSpecification):
         name: str,
         datafields: list[EEPDataField],
         semantic_resolvers: dict[Observable, SemanticResolver] | None = None,
-        capability_factories: list[CapabilityFactory] | None = None,
-        command_encoders: dict[Action, CommandEncoder] | None = None,
+        observers: list[ObserverFactory] | None = None,
+        encoders: dict[Action, ActionEncoder] | None = None,
         entities: list[Entity] | None = None,
     ):
         """Initialize a single-telegram EEP.
@@ -216,8 +216,8 @@ class SimpleProfileSpecification(EEPSpecification):
             name: Human-readable name/description.
             datafields: List of data fields in the unique telegram that is defined for this EEP.
             semantic_resolvers: Optional dict of Observable → resolver for multi-field combinations.
-            capability_factories: Optional list of capability factory callables.
-            command_encoders: Optional dict of Action → encoder callables.
+            observers: Optional list of observer factory callables.
+            encoders: Optional dict of Action → encoder callables.
             entities: Optional list of Entity declarations for this EEP.
         """
 
@@ -228,7 +228,7 @@ class SimpleProfileSpecification(EEPSpecification):
             cmd_offset=None,
             telegrams={0: EEPTelegram(name=None, datafields=datafields)},
             semantic_resolvers=semantic_resolvers or {},
-            capability_factories=capability_factories or [],
-            command_encoders=command_encoders or {},
+            observers=observers or [],
+            encoders=encoders or {},
             entities=entities or [],
         )

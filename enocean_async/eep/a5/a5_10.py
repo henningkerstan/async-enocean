@@ -480,7 +480,7 @@ _CAP_ILL = scalar_factory(Observable.ILLUMINATION)
 _CAP_VOLT = scalar_factory(Observable.VOLTAGE, entity_id="supply_voltage")
 
 # ---------------------------------------------------------------------------
-# Entity helpers — ids use Observable.value to match ScalarCapability output
+# Entity helpers — ids use Observable.value to match ScalarObserver output
 # ---------------------------------------------------------------------------
 
 _E_TMP = Entity(
@@ -523,14 +523,14 @@ def _spec(
     type_id: int,
     name: str,
     datafields: list[EEPDataField],
-    capability_factories: list,
+    observers: list,
     entities: list[Entity] | None = None,
 ) -> SimpleProfileSpecification:
     return SimpleProfileSpecification(
         eep=EEP.from_string(f"A5-10-{type_id:02X}"),
         name=name,
         datafields=datafields,
-        capability_factories=capability_factories,
+        observers=observers,
         entities=entities or [],
     )
 

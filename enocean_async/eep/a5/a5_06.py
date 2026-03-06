@@ -93,7 +93,7 @@ class _EEP_A5_06(SimpleProfileSpecification):
                 ),
             ],
             semantic_resolvers={Observable.ILLUMINATION: _a5_06_illumination_resolver},
-            capability_factories=_ILL_FACTORY,
+            observers=_ILL_FACTORY,
             entities=_ILL_ENTITY,
         )
 
@@ -133,7 +133,7 @@ EEP_A5_06_03 = SimpleProfileSpecification(
             observable=Observable.ILLUMINATION,
         ),
     ],
-    capability_factories=_ILL_FACTORY,
+    observers=_ILL_FACTORY,
     entities=_ILL_ENTITY,
 )
 
@@ -191,7 +191,7 @@ EEP_A5_06_04 = SimpleProfileSpecification(
             },
         ),
     ],
-    capability_factories=[
+    observers=[
         scalar_factory(Observable.ILLUMINATION),
         scalar_factory(Observable.TEMPERATURE),
     ],
@@ -225,7 +225,7 @@ EEP_A5_06_01_ELTAKO = SimpleProfileSpecification(
         ),
     ],
     semantic_resolvers={Observable.ILLUMINATION: _a5_06_eltako_illumination_resolver},
-    capability_factories=_ILL_FACTORY,
+    observers=_ILL_FACTORY,
     entities=_ILL_ENTITY,
 )
 

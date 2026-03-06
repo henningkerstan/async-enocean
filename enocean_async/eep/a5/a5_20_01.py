@@ -105,7 +105,7 @@ EEP_A5_20_01 = SimpleProfileSpecification(
             range_enum={0: "Teach-in telegram", 1: "Data telegram"},
         ),
     ],
-    capability_factories=[
+    observers=[
         scalar_factory(Observable.VALVE_POSITION),
         scalar_factory(Observable.TEMPERATURE),
     ],

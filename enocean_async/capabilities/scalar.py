@@ -1,20 +1,20 @@
-"""Generic scalar capability driven by observable annotation on EEP fields."""
+"""Generic scalar observer driven by observable annotation on EEP fields."""
 
 from dataclasses import dataclass, field
 from time import time
 
 from ..eep.message import EEPMessage
-from ..eep.profile import CapabilityFactory
-from .capability import Capability
+from ..eep.profile import ObserverFactory
+from .capability import Observer
 from .observable import Observable
 from .state_change import EntityStateChange, EntityStateChangeSource
 
 
 @dataclass
-class ScalarCapability(Capability):
-    """Generic capability that emits an EntityStateChange for any EEP field annotated with a matching observable.
+class ScalarObserver(Observer):
+    """Generic observer that emits an EntityStateChange for any EEP field annotated with a matching observable.
 
-    This capability reads from the EEP-level observable key that was propagated into EEPMessage.entities by EEPHandler.
+    This observer reads from the EEP-level observable key that was propagated into EEPMessage.entities by EEPHandler.
     This makes it fully EEP-agnostic.
     """
 
@@ -54,23 +54,27 @@ class ScalarCapability(Capability):
         )
 
 
+# Backward-compatible alias
+ScalarCapability = ScalarObserver
+
+
 def scalar_factory(
     observable: Observable,
     *,
     entity_id: str = "",
     entity_id_field: str | None = None,
     entity_id_not_applicable: int | None = None,
-) -> CapabilityFactory:
-    """Return a ``CapabilityFactory`` that creates a ``ScalarCapability`` for ``observable``.
+) -> ObserverFactory:
+    """Return an ``ObserverFactory`` that creates a ``ScalarObserver`` for ``observable``.
 
     Args:
-        observable: The observable this capability reads and emits.
+        observable: The observable this observer reads and emits.
         entity_id: Static entity ID for the EntityStateChange (defaults to observable.value).
         entity_id_field: Optional field ID to read the entity ID from (e.g. ``"I/O"`` for D2-01).
         entity_id_not_applicable: Raw field value meaning "not channel-specific"; falls back to entity_id.
     """
-    return CapabilityFactory(
-        factory=lambda addr, cb: ScalarCapability(
+    return ObserverFactory(
+        factory=lambda addr, cb: ScalarObserver(
             device_address=addr,
             on_state_change=cb,
             observable=observable,

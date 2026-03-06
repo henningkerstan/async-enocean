@@ -29,7 +29,7 @@ EEP_F6_10_00 = SimpleProfileSpecification(
             observable=Observable.WINDOW_STATE,
         ),
     ],
-    capability_factories=_WIN_FACTORIES,
+    observers=_WIN_FACTORIES,
     entities=_WIN_ENTITIES,
 )
 
@@ -50,6 +50,6 @@ EEP_F6_10_00_ELTAKO = SimpleProfileSpecification(
             observable=Observable.WINDOW_STATE,
         ),
     ],
-    capability_factories=_WIN_FACTORIES,
+    observers=_WIN_FACTORIES,
     entities=_WIN_ENTITIES,
 )
