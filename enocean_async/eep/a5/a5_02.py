@@ -26,6 +26,8 @@ class _EEP_A5_02(SimpleProfileSpecification):
                     name="Temperature",
                     offset=14 if ten_bit else 16,
                     size=10 if ten_bit else 8,
+                    range_min=1023 if ten_bit else 255,
+                    range_max=0,
                     scale_min_fn=lambda _: scale_min,
                     scale_max_fn=lambda _: scale_max,
                     unit_fn=lambda _: "°C",
