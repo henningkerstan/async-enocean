@@ -10,6 +10,7 @@ from .device import Device
 from .eep.id import EEP
 from .eep.profile import DeviceDescriptor
 from .gateway import Gateway
+from .semantics.entity_type import EntityType
 from .semantics.instructable import Instructable
 from .semantics.instruction import Instruction
 from .semantics.instructions.cover import (
@@ -26,6 +27,7 @@ from .semantics.instructions.switch import (
 )
 from .semantics.observable import Observable
 from .semantics.observation import Observation, ObservationCallback, ObservationSource
+from .semantics.value_kind import ValueKind
 
 __all__ = [
     # Gateway
@@ -40,10 +42,12 @@ __all__ = [
     "DeviceDescriptor",
     "EEP",
     # Receive side
+    "EntityType",
     "Observable",
     "Observation",
     "ObservationCallback",
     "ObservationSource",
+    "ValueKind",
     # Send side
     "Instructable",
     "Instruction",
